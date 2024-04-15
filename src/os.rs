@@ -68,8 +68,16 @@ pub fn get_os() -> Option<OS> {
 
 #[cfg(unix)]
 pub fn get_os() -> Option<OS> {
-    if let (Some(dis), Some(arch)) = (exec("uname", ["-o"]), exec("uname", ["-i"])) {
+    if let (Some(dis), Some(arch)) = (exec("uname", ["-o"]), exec("uname", ["-m"])) {
         match dis.as_str() {
+            "Android" => {
+                let version = exec("getprop", ["ro.build.version.release"])?;
+                return Some(OS {
+                    distro: Distro::Android,
+                    arch,
+                    version: version.into(),
+                });
+            }
             "Linux" | "GNU/Linux" => {
                 if let Some(output) = exec("lsb_release", ["-d"]) {
                     let name = output.split(':').last()?.trim();

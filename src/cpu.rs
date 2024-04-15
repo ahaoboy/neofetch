@@ -1,21 +1,31 @@
+use std::collections::HashMap;
+
 use crate::share::exec;
 
 pub fn get_cpu() -> Option<String> {
-    let cpu = exec(
-        "awk",
-        ["-F", ":", "/model name/ {print $2; exit}", "/proc/cpuinfo"],
-    )?;
+    let s = exec("cat", ["/proc/cpuinfo"])?;
+    let mut cpuinfo = HashMap::new();
+    for line in s.lines() {
+        let mut line = line.split(':');
 
-    let feq = exec(
-        "awk",
-        ["-F", ":", "/cpu MHz/ {printf $2; exit}", "/proc/cpuinfo"],
-    )?;
-    let feq: f64 = feq.parse().ok()?;
-    let feq_str = if feq < 1000. {
-        format!("{:.2}MHz", feq)
-    } else {
-        format!("{:.2}GHz", feq / 1000.)
-    };
+        if let (Some(key), Some(value)) = (line.next(), line.next()) {
+            cpuinfo.insert(key.trim(), value.trim());
+        }
+    }
 
-    Some(format!("{cpu} @ {feq_str}"))
+    let cpu = cpuinfo.get("model name").or(cpuinfo.get("Hardware"))?;
+
+    let feq = cpuinfo.get("cpu MHz").map(|s| s.parse::<f64>().ok());
+
+    if let Some(Some(feq)) = feq {
+        let feq_str = if feq < 1000. {
+            format!("{:.2}MHz", feq)
+        } else {
+            format!("{:.2}GHz", feq / 1000.)
+        };
+
+        return Some(format!("{cpu} @ {feq_str}"));
+    }
+
+    Some(cpu.to_string())
 }

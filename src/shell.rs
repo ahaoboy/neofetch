@@ -1,3 +1,6 @@
+
+use regex::Regex;
+
 use crate::share::{exec, get_file_name};
 
 #[derive(Debug, Clone, Copy)]
@@ -63,6 +66,16 @@ pub fn get_shell_version(sh: Shell) -> Option<String> {
             // PowerShell 7.4.1
             return Some(version[11..].trim().into());
         }
+        Shell::Bash => {
+            // GNU bash, version 5.2.26(1)-release (aarch64-unknown-linux-android)
+            let re = Regex::new(r"([0-9]+).([0-9]+).([0-9]+)").unwrap();
+            let cap = re.captures(&version)?;
+
+            if let (Some(a), Some(b), Some(c)) = (cap.get(1), cap.get(2), cap.get(3)) {
+                return Some(format!("{}.{}.{}", a.as_str(), b.as_str(), c.as_str()));
+            }
+            None
+        }
         Shell::Cmd => {
             // Microsoft Windows [版本 10.0.22635.2700]
             // (c) Microsoft Corporation。保留所有权利。
@@ -83,7 +96,7 @@ pub fn get_shell_version(sh: Shell) -> Option<String> {
 #[cfg(windows)]
 pub fn get_shell() -> Option<ShellVersion> {
     let list = exec("wmic", ["process", "get", "ExecutablePath"])?;
-    let list = list.trim().lines().rev().filter(|i| i.trim().len() > 0);
+    let list = list.trim().lines().rev().filter(|i| !i.trim().is_empty());
 
     for path in list {
         let cmd = get_file_name(path)?;

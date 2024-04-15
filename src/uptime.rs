@@ -8,11 +8,25 @@ fn with_unit(n: u64, unit: &str) -> String {
 }
 
 pub fn get_uptime() -> Option<String> {
-    let s = exec("cat", ["/proc/uptime"])?;
+    let mut time: u64 = 0;
+    if let Some(uptime) = exec("cat", ["/proc/uptime"]) {
+        if !uptime.is_empty() {
+            let s = uptime.split(' ').next().unwrap_or_default();
+            time = s.parse::<f64>().ok()? as u64;
+        }
+    }
 
-    let time = s.trim().split(' ').next()?;
-    let time: f64 = time.parse().ok()?;
-    let time: u64 = time as u64;
+    if let Some(uptime) = exec("uptime", ["-s"]) {
+        if let (Some(boot), Some(now)) = (
+            exec("date", ["-d", uptime.as_str(), "+%s"]),
+            exec("date", ["+%s"]),
+        ) {
+            if let (Ok(boot), Ok(now)) = (boot.parse::<f64>(), now.parse::<f64>()) {
+                time = (now - boot) as u64;
+            }
+        }
+    }
+
     if time < ONE_MINUTE {
         return Some(with_unit(time, "sec"));
     }
@@ -42,7 +56,7 @@ pub fn get_uptime() -> Option<String> {
     let min = (time - day * ONE_DAY - hour * ONE_HOUR) / ONE_MINUTE;
     Some(format!(
         "{}, {}, {}",
-        with_unit(day, "hour"),
+        with_unit(day, "day"),
         with_unit(hour, "hour"),
         with_unit(min, "min")
     ))

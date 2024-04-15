@@ -15,7 +15,7 @@ pub mod terminal;
 pub mod uptime;
 pub mod wm;
 
-use icon::{Linux, Ubuntu};
+use icon::{Android, Linux, Ubuntu};
 use neofetch::battery::get_battery;
 use neofetch::packages::get_packages;
 use neofetch::resolution::get_resolution;
@@ -95,6 +95,8 @@ pub fn start() {
             icon = Windows_10()
         } else if s.starts_with("Windows") {
             icon = Windows()
+        } else if s.starts_with("Android") {
+            icon = Android()
         } else if s.starts_with("Ubuntu") {
             icon = Ubuntu()
         } else if s.starts_with("Linux") {
@@ -114,7 +116,7 @@ pub fn start() {
     }
     if let Some(packages) = get_packages() {
         let s = packages.to_string();
-        if s.trim().len() > 0 {
+        if !s.trim().is_empty() {
             info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{}\n", s));
         }
     }
@@ -186,5 +188,5 @@ pub fn start() {
 }
 
 fn main() {
-    start()
+  start()
 }

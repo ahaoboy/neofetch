@@ -9,3 +9,5 @@ neofetch
 ![alt text](imgs/win11.png)
 ### ubuntu
 ![alt text](imgs/ubuntu.png)
+### android
+![alt text](imgs/android.png)
