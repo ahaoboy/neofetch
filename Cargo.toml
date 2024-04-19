@@ -1,6 +1,6 @@
 [package]
 name = "neofetch"
-version = "0.1.1"
+version = "0.1.3"
 edition = "2021"
 repository = "https://github.com/ahaoboy/neofetch"
 license = "MIT"
@@ -17,6 +17,7 @@ eula = false
 [dependencies]
 human_bytes = "0.4"
 regex = "1.10.4"
+ansi-width = "0.1.0"
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

@@ -5,6 +5,26 @@ pub fn get_host() -> Option<String> {
     s.lines().last()?.trim().to_string().into()
 }
 
+#[cfg(windows)]
+pub fn get_rom() -> Option<String> {
+    None
+}
+
+#[cfg(windows)]
+pub fn get_baseband() -> Option<String> {
+    None
+}
+
+#[cfg(unix)]
+pub fn get_rom() -> Option<String> {
+    exec("getprop", ["ro.build.display.id"])
+}
+
+#[cfg(unix)]
+pub fn get_baseband() -> Option<String> {
+    exec("getprop", ["ro.baseband"])
+}
+
 #[cfg(unix)]
 pub fn get_host() -> Option<String> {
     if let (Some(name), Some(version)) = (
@@ -16,12 +36,13 @@ pub fn get_host() -> Option<String> {
         }
     }
 
-    if let (Some(name), Some(version)) = (
+    if let (Some(name), Some(version), Some(device)) = (
         exec("getprop", ["ro.product.brand"]),
         exec("getprop", ["ro.product.model"]),
+        exec("getprop", ["ro.product.device"]),
     ) {
-        if !name.is_empty() && !version.is_empty() {
-            return format!("{name} {version}").into();
+        if !name.is_empty() && !version.is_empty() && !device.is_empty() {
+            return format!("{name} {version} ({device})").into();
         }
     }
     None

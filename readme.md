@@ -1,4 +1,5 @@
 ## install
+
 ```rs
 cargo install neofetch
 
@@ -6,8 +7,25 @@ neofetch
 ```
 
 ### win
-![alt text](imgs/win11.png)
+
+<div align="center">
+	<a href="https://github.com/ahaoboy/neofetch">
+		<img src="assets/win11.svg">
+	</a>
+</div>
+
 ### ubuntu
-![alt text](imgs/ubuntu.png)
+
+<div align="center">
+	<a href="https://github.com/ahaoboy/neofetch">
+		<img src="assets/ubuntu.svg">
+	</a>
+</div>
+
 ### android
-![alt text](imgs/android.png)
+
+<div align="center">
+	<a href="https://github.com/ahaoboy/neofetch">
+		<img src="assets/android.svg">
+	</a>
+</div>
