@@ -1,3 +1,4 @@
+use std::fmt::Display;
 
 use regex::Regex;
 
@@ -20,9 +21,9 @@ pub struct ShellVersion {
     version: String,
 }
 
-impl ToString for ShellVersion {
-    fn to_string(&self) -> String {
-        format!("{} {}", self.shell.to_string(), self.version)
+impl Display for ShellVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{} {}", self.shell, self.version))
     }
 }
 
@@ -41,17 +42,18 @@ impl From<&str> for Shell {
     }
 }
 
-impl ToString for Shell {
-    fn to_string(&self) -> String {
-        match self {
-            Shell::Fish => "fish".into(),
-            Shell::Zsh => "zsh".into(),
-            Shell::Bash => "bash".into(),
-            Shell::PowerShell => "powershell".into(),
-            Shell::Cmd => "cmd".into(),
-            Shell::Pwsh => "pwsh".into(),
-            Shell::Unknown => "unknown".into(),
-        }
+impl Display for Shell {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Shell::Fish => "fish",
+            Shell::Zsh => "zsh",
+            Shell::Bash => "bash",
+            Shell::PowerShell => "powershell",
+            Shell::Cmd => "cmd",
+            Shell::Pwsh => "pwsh",
+            Shell::Unknown => "unknown",
+        };
+        f.write_str(s)
     }
 }
 

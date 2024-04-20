@@ -5,8 +5,8 @@ pub struct Packages {
     pacman: Vec<String>,
 }
 
-impl ToString for Packages {
-    fn to_string(&self) -> String {
+impl Display for Packages {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut v = Vec::new();
         if !self.dpkg.is_empty() {
             v.push(format!("{} (dpkg)", self.dpkg.len()))
@@ -18,9 +18,11 @@ impl ToString for Packages {
             v.push(format!("{} (pacman)", self.pacman.len()))
         }
 
-        v.join(", ")
+        f.write_str(&v.join(", "))
     }
 }
+
+use std::fmt::Display;
 
 use crate::share::exec;
 

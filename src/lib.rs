@@ -2,6 +2,7 @@ pub mod battery;
 pub mod color;
 pub mod cpu;
 pub mod de;
+pub mod disk;
 pub mod gpu;
 pub mod host;
 pub mod hostname;
@@ -18,13 +19,12 @@ pub mod uptime;
 pub mod user;
 pub mod wm;
 
-use battery::get_battery;
-use host::{get_baseband, get_rom};
-use icon::{Android, Linux, Ubuntu};
-use packages::get_packages;
-use resolution::get_resolution;
-use user::get_user;
-
+use crate::battery::get_battery;
+use crate::host::{get_baseband, get_rom};
+use crate::icon::{Android, Linux, Ubuntu};
+use crate::packages::get_packages;
+use crate::resolution::get_resolution;
+use crate::user::get_user;
 use crate::color::{
     cursor_down, cursor_forward, cursor_up, BLACK_BG, BLUE_BG, BOLD, BRIGHT_BLACK_BG,
     BRIGHT_BLUE_BG, BRIGHT_CYAN_BG, BRIGHT_GREEN_BG, BRIGHT_MAGENTA_BG, BRIGHT_RED_BG,
@@ -33,6 +33,7 @@ use crate::color::{
 };
 use crate::cpu::get_cpu;
 use crate::de::get_de;
+use crate::disk::get_disk;
 use crate::host::get_host;
 use crate::hostname::get_hostname;
 use crate::icon::{Windows, Windows_10, Windows_11};
@@ -43,16 +44,13 @@ use crate::terminal::get_terminal;
 use crate::uptime::get_uptime;
 use crate::wm::{get_wm, get_wm_theme};
 use crate::{gpu::get_gpu, os::get_os};
+
 pub fn join(left: String, right: String) -> String {
     let mut s = String::new();
     let left_h = left.lines().count();
     let right_h = right.lines().count();
     let max_h = left_h.max(right_h);
-    let left_max_w = left
-        .lines()
-        .map(ansi_width::ansi_width)
-        .max()
-        .unwrap();
+    let left_max_w = left.lines().map(ansi_width::ansi_width).max().unwrap();
 
     let gap = 3;
 
@@ -131,10 +129,7 @@ pub fn neofetch() -> String {
         }
     }
     if let Some(shell) = get_shell() {
-        info.push_str(&format!(
-            "{GREEN}{BOLD}Shell: {RESET}{}\n",
-            shell.to_string()
-        ));
+        info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{}\n", shell));
     }
 
     if let Some(resolution) = get_resolution() {
@@ -156,9 +151,15 @@ pub fn neofetch() -> String {
     if let Some(terminal) = get_terminal() {
         info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
     }
+
+    if let Some(disk) = get_disk() {
+        info.push_str(&format!("{GREEN}{BOLD}Disk: {RESET}{}\n", disk));
+    }
+
     if let Some(cpu) = get_cpu() {
         info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
     }
+
     if let Some(gpu) = get_gpu() {
         info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{gpu}\n"));
     }

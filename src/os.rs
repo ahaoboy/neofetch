@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::share::exec;
 
 #[derive(Debug, Clone, Copy)]
@@ -11,17 +13,18 @@ pub enum Distro {
     Unknown,
 }
 
-impl ToString for Distro {
-    fn to_string(&self) -> String {
-        match self {
-            Distro::Windows => "Windows".into(),
-            Distro::Ubuntu => "Ubuntu".into(),
-            Distro::Android => "Android".into(),
-            Distro::Linux => "Linux".into(),
-            Distro::Unix => "Unix".into(),
-            Distro::Mac => "Mac".into(),
-            Distro::Unknown => "Unknown".into(),
-        }
+impl Display for Distro {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Distro::Windows => "Windows",
+            Distro::Ubuntu => "Ubuntu",
+            Distro::Android => "Android",
+            Distro::Linux => "Linux",
+            Distro::Unix => "Unix",
+            Distro::Mac => "Mac",
+            Distro::Unknown => "Unknown",
+        };
+        f.write_str(s)
     }
 }
 #[derive(Debug, Clone)]
@@ -30,13 +33,14 @@ pub struct OS {
     version: String,
     arch: String,
 }
-impl ToString for OS {
-    fn to_string(&self) -> String {
-        [self.distro.to_string().as_str(), &self.version, &self.arch]
+impl Display for OS {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = [self.distro.to_string().as_str(), &self.version, &self.arch]
             .into_iter()
             .filter(|i| !i.is_empty())
             .collect::<Vec<_>>()
-            .join(" ")
+            .join(" ");
+        f.write_str(&s)
     }
 }
 #[cfg(windows)]
@@ -75,7 +79,7 @@ pub fn get_os() -> Option<OS> {
                 return Some(OS {
                     distro: Distro::Android,
                     arch,
-                    version: version.into(),
+                    version,
                 });
             }
             "Linux" | "GNU/Linux" => {
