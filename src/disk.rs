@@ -21,40 +21,59 @@ use human_bytes::human_bytes;
 use crate::share::exec;
 
 #[cfg(windows)]
-pub fn get_disk() -> Option<Disk> {
+pub fn get_disk() -> Option<Vec<Disk>> {
     use regex::Regex;
     let s = exec("wmic", ["logicaldisk", "get", "deviceid,freespace,size"])?;
-    let s = s.lines().nth(1)?.trim().to_string();
-    let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)").ok()?;
-    let cap = re.captures(&s)?;
-    let name = cap.get(1).unwrap().as_str().to_string();
-    let free = cap.get(2).unwrap().as_str().parse::<u64>().ok()?;
-    let total = cap.get(3).unwrap().as_str().parse::<u64>().ok()?;
-    let used = total - free;
-    Some(Disk { name, used, total })
+    let mut v = vec![];
+    for line in s.lines().skip(1) {
+        let s = line.trim().to_string();
+        let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)").ok()?;
+        let cap = re.captures(&s)?;
+        let name = cap.get(1).unwrap().as_str().to_string();
+
+        if let (Ok(free), Ok(total)) = (
+            cap.get(2).unwrap().as_str().parse::<u64>(),
+            cap.get(3).unwrap().as_str().parse::<u64>(),
+        ) {
+            let used = total - free;
+            let disk = Disk { name, used, total };
+            v.push(disk);
+        }
+    }
+
+    Some(v)
 }
 
 #[cfg(unix)]
-pub fn get_disk() -> Option<Disk> {
+pub fn get_disk() -> Option<Vec<Disk>> {
     use regex::Regex;
     let s = exec("df", [])?;
-    let mut disk = Disk {
-        name: "".to_string(),
-        total: 0,
-        used: 0,
-    };
-    for i in s.lines().skip(1) {
-        let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)\s+([0-9]+).*?").ok()?;
-        let cap = re.captures(i.trim())?;
-        let name = cap.get(1).unwrap().as_str().to_string();
-        let total = cap.get(2).unwrap().as_str().parse::<u64>().ok()? * 1024;
-        let used = cap.get(3).unwrap().as_str().parse::<u64>().ok()? * 1024;
 
-        if total > disk.total {
-            disk.name = name;
-            disk.total = total;
-            disk.used = used;
+    let skip = [
+        // linux
+        "tmpfs",
+        // android
+        "overlay",
+        "/dev/block",
+    ];
+    let mut v = vec![];
+    for line in s.lines().skip(1) {
+        let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)\s+([0-9]+).*?").ok()?;
+        let cap = re.captures(line.trim())?;
+        let name = cap.get(1).unwrap().as_str().to_string();
+
+        if skip.iter().any(|i| line.starts_with(i)) {
+            continue;
+        }
+
+        if let (Ok(total), Ok(used)) = (
+            cap.get(2).unwrap().as_str().parse::<u64>(),
+            cap.get(3).unwrap().as_str().parse::<u64>(),
+        ) {
+            let total = total * 1024;
+            let used = used * 1024;
+            v.push(Disk { name, used, total })
         }
     }
-    Some(disk)
+    Some(v)
 }

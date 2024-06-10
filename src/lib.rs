@@ -20,11 +20,6 @@ pub mod user;
 pub mod wm;
 
 use crate::battery::get_battery;
-use crate::host::{get_baseband, get_rom};
-use crate::icon::{Android, Linux, Ubuntu};
-use crate::packages::get_packages;
-use crate::resolution::get_resolution;
-use crate::user::get_user;
 use crate::color::{
     cursor_down, cursor_forward, cursor_up, BLACK_BG, BLUE_BG, BOLD, BRIGHT_BLACK_BG,
     BRIGHT_BLUE_BG, BRIGHT_CYAN_BG, BRIGHT_GREEN_BG, BRIGHT_MAGENTA_BG, BRIGHT_RED_BG,
@@ -35,13 +30,18 @@ use crate::cpu::get_cpu;
 use crate::de::get_de;
 use crate::disk::get_disk;
 use crate::host::get_host;
+use crate::host::{get_baseband, get_rom};
 use crate::hostname::get_hostname;
+use crate::icon::{Android, Linux, Ubuntu};
 use crate::icon::{Windows, Windows_10, Windows_11};
 use crate::kernel::get_kernel;
 use crate::memory::get_memory;
+use crate::packages::get_packages;
+use crate::resolution::get_resolution;
 use crate::shell::get_shell;
 use crate::terminal::get_terminal;
 use crate::uptime::get_uptime;
+use crate::user::get_user;
 use crate::wm::{get_wm, get_wm_theme};
 use crate::{gpu::get_gpu, os::get_os};
 
@@ -152,8 +152,12 @@ pub fn neofetch() -> String {
         info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
     }
 
-    if let Some(disk) = get_disk() {
-        info.push_str(&format!("{GREEN}{BOLD}Disk: {RESET}{}\n", disk));
+    if let Some(disks) = get_disk() {
+        if !disks.is_empty() {
+            for disk in disks {
+                info.push_str(&format!("{GREEN}{BOLD}Disk({}): {RESET}{}\n",disk.name, disk));
+            }
+        }
     }
 
     if let Some(cpu) = get_cpu() {
