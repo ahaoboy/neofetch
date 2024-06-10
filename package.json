@@ -1,0 +1,16 @@
+{
+  "name": "neofetch",
+  "version": "0.0.0",
+  "private": true,
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "update:win": "cargo run | ansi2 > ./assets/win11.svg",
+    "update:android": "cargo run | ansi2 > ./assets/android.svg",
+    "update:ubuntu": "cargo run | ansi2 > ./assets/ubuntu.svg",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

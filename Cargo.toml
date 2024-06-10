@@ -1,6 +1,6 @@
 [package]
 name = "neofetch"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 repository = "https://github.com/ahaoboy/neofetch"
 license = "MIT"
@@ -27,11 +27,11 @@ lto = "thin"
 # Config for 'cargo dist'
 [workspace.metadata.dist]
 # The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.13.1"
+cargo-dist-version = "0.15.1"
 # CI backends to support
-ci = ["github"]
+ci = "github"
 # The installers to generate for each app
-installers = ["shell", "powershell", "npm"]
+installers = []
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = ["x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
 # The archive format to use for windows builds (defaults .zip)

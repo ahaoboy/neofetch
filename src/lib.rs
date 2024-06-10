@@ -3,6 +3,7 @@ pub mod color;
 pub mod cpu;
 pub mod de;
 pub mod disk;
+pub mod display;
 pub mod gpu;
 pub mod host;
 pub mod hostname;
@@ -18,6 +19,8 @@ pub mod terminal;
 pub mod uptime;
 pub mod user;
 pub mod wm;
+
+use display::get_display;
 
 use crate::battery::get_battery;
 use crate::color::{
@@ -132,9 +135,18 @@ pub fn neofetch() -> String {
         info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{}\n", shell));
     }
 
-    if let Some(resolution) = get_resolution() {
-        info.push_str(&format!("{GREEN}{BOLD}Resolution: {RESET}{resolution}\n"));
+    if let Some(displays) = get_display() {
+        for display in displays {
+            let key = display.name.clone().map_or(format!("{GREEN}{BOLD}Display"), |s| {
+                format!("{GREEN}{BOLD}Display({s})")
+            });
+            info.push_str(&format!("{key}: {RESET}{}\n", display));
+        }
     }
+
+    // if let Some(resolution) = get_resolution() {
+    //     info.push_str(&format!("{GREEN}{BOLD}Resolution: {RESET}{resolution}\n"));
+    // }
 
     if let Some(de) = get_de() {
         info.push_str(&format!("{GREEN}{BOLD}DE: {RESET}{de}\n"));
@@ -155,7 +167,10 @@ pub fn neofetch() -> String {
     if let Some(disks) = get_disk() {
         if !disks.is_empty() {
             for disk in disks {
-                info.push_str(&format!("{GREEN}{BOLD}Disk({}): {RESET}{}\n",disk.name, disk));
+                info.push_str(&format!(
+                    "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
+                    disk.name, disk
+                ));
             }
         }
     }
