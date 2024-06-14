@@ -40,7 +40,6 @@ use crate::icon::{Windows, Windows_10, Windows_11};
 use crate::kernel::get_kernel;
 use crate::memory::get_memory;
 use crate::packages::get_packages;
-use crate::resolution::get_resolution;
 use crate::shell::get_shell;
 use crate::terminal::get_terminal;
 use crate::uptime::get_uptime;

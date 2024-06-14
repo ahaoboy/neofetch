@@ -19,6 +19,9 @@ human_bytes = "0.4"
 regex = "1.10.4"
 ansi-width = "0.1.0"
 
+[target.'cfg(target_os = "windows")'.dependencies]
+glfw = "0.56.0"
+
 # The profile that 'cargo dist' will build with
 [profile.dist]
 inherits = "release"

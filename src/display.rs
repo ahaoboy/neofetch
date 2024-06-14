@@ -24,68 +24,61 @@ impl std::fmt::Display for Display {
             v.push(format!("(as {}x{})", w, h));
         }
 
+        if let Some(true) = self.external {
+            v.push("[External]".to_string());
+        }
+
+        if let Some(true) = self.primary {
+            v.push("*".to_string());
+        }
         f.write_str(&v.join(" "))
     }
 }
 
-use crate::share::exec;
-
 #[cfg(windows)]
 pub fn get_display() -> Option<Vec<Display>> {
-    let pnp_id_str = exec("wmic", ["desktopmonitor", "get", "PNPDeviceID"])?;
-    let mut v = vec![];
+    use glfw::ffi::GLFWmonitor;
 
-    let display_str = exec(
-        "wmic",
-        [
-            "path",
-            "Win32_VideoController",
-            "get",
-            "CurrentHorizontalResolution,CurrentVerticalResolution,CurrentRefreshRate",
-            "/format:csv",
-        ],
-    )?;
-
-    let name_list = pnp_id_str.lines().skip(1).filter_map(|line| {
-        if let Some(name) = exec(
-            "powershell",
-            [
-                "-c",
-                &format!(
-                    "Get-PnpDevice -InstanceId  '{}' |  Select-Object FriendlyName",
-                    line.trim()
-                ),
-            ],
-        ) {
-            let mut name = name.lines().last().unwrap().trim().to_string();
-            if name.starts_with("Generic Monitor (") {
-                name = name[17..name.len() - 1].trim().to_string()
-            }
-            return Some(name);
+    fn get_ptr(m: &glfw::Monitor) -> usize {
+        pub struct A {
+            ptr: *mut GLFWmonitor,
         }
-        None
-    });
-
-    let info_list = display_str.lines().skip(1).flat_map(|s| {
-        let v = s.split(',').collect::<Vec<_>>();
-        let w = v[1].parse::<u32>().ok()?;
-        let h = v[3].parse::<u32>().ok()?;
-        let refresh_rate = v[2].parse::<u32>().ok()?;
-        Some((w, h, refresh_rate))
-    });
-
-    for (name, (w, h, refresh_rate)) in name_list.zip(info_list) {
-        v.push(Display {
-            name: Some(name),
-            refresh_rate: Some(refresh_rate),
-            external: None,
-            resolution: Some((w, h)),
-            scale_resolution: None,
-            rotation: None,
-            primary: None,
-        })
+        let a = m as *const _ as *const A;
+        unsafe { (*a).ptr as usize }
     }
 
+    let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
+
+    let p = glfw
+        .with_primary_monitor(|_, m: Option<&mut glfw::Monitor>| m.map(|i| get_ptr(i)))
+        .unwrap_or_default();
+
+    let v = glfw.with_connected_monitors(|_, monitors| {
+        monitors
+            .iter()
+            .map(|monitor| {
+                let mode = monitor.get_video_mode().unwrap();
+                let refresh_rate = mode.refresh_rate;
+                let resolution = (mode.width, mode.height);
+                let scale = monitor.get_content_scale();
+                let scale_resolution = (
+                    (resolution.0 as f32 / scale.0) as u32,
+                    (resolution.1 as f32 / scale.1) as u32,
+                );
+                let primary = get_ptr(monitor) == p;
+
+                Display {
+                    name: monitor.get_name(),
+                    refresh_rate: Some(refresh_rate),
+                    external: None,
+                    resolution: Some(resolution),
+                    scale_resolution: Some(scale_resolution),
+                    rotation: None,
+                    primary: Some(primary),
+                }
+            })
+            .collect::<Vec<_>>()
+    });
     Some(v)
 }
 
