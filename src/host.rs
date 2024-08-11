@@ -1,7 +1,13 @@
 use crate::share::exec;
 #[cfg(windows)]
 pub fn get_host() -> Option<String> {
-    let s = exec("wmic", ["computersystem", "get", "manufacturer"])?;
+    let s = exec("wmic", ["computersystem", "get", "manufacturer"]).or(exec(
+      "powershell",
+      [
+          "-c",
+          "Get-CimInstance Win32_computersystem | Select-Object manufacturer",
+      ],
+  ))?;
     s.lines().last()?.trim().to_string().into()
 }
 

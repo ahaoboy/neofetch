@@ -52,7 +52,7 @@ pub fn join(left: String, right: String) -> String {
     let left_h = left.lines().count();
     let right_h = right.lines().count();
     let max_h = left_h.max(right_h);
-    let left_max_w = left.lines().map(ansi_width::ansi_width).max().unwrap();
+    let left_max_w = left.lines().map(ansi_width::ansi_width).max().unwrap_or(0);
 
     let gap = 3;
 

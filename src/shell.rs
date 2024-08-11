@@ -97,8 +97,19 @@ pub fn get_shell_version(sh: Shell) -> Option<String> {
 
 #[cfg(windows)]
 pub fn get_shell() -> Option<ShellVersion> {
-    let list = exec("wmic", ["process", "get", "ExecutablePath"])?;
-    let list = list.trim().lines().rev().filter(|i| !i.trim().is_empty());
+    let list = exec("wmic", ["process", "get", "ExecutablePath"]).or(exec(
+        "powershell",
+        [
+            "-c",
+            "Get-CimInstance Win32_Process | Select-Object ExecutablePath",
+        ],
+    ))?;
+    let list = list
+        .trim()
+        .lines()
+        .rev()
+        .filter(|i| !i.trim().is_empty())
+        .skip(1);
 
     for path in list {
         let cmd = get_file_name(path)?;

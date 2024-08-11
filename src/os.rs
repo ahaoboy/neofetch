@@ -45,7 +45,14 @@ impl Display for OS {
 }
 #[cfg(windows)]
 pub fn get_os() -> Option<OS> {
-    let s = exec("wmic", ["os", "get", "Caption"])?;
+    let s = exec("wmic", ["os", "get", "Caption"]).or(exec(
+        "powershell",
+        [
+            "-c",
+            "Get-CimInstance Win32_OperatingSystem | Select-Object Caption",
+        ],
+    ))?;
+
     let s = s.trim().lines().last()?.trim();
     if s.starts_with("Microsoft Windows 11") {
         return Some(OS {

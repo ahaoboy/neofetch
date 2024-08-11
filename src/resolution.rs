@@ -10,7 +10,13 @@ pub fn get_resolution() -> Option<String> {
             "get",
             "CurrentHorizontalResolution",
         ],
-    )?;
+    ).or(exec(
+      "powershell",
+      [
+          "-c",
+          "Get-CimInstance Win32_VideoController | Select-Object CurrentHorizontalResolution",
+      ],
+  ))?;
 
     let w = s.trim().lines().last()?.trim();
     let s = exec(
@@ -21,7 +27,13 @@ pub fn get_resolution() -> Option<String> {
             "get",
             "CurrentVerticalResolution",
         ],
-    )?;
+    ).or(exec(
+      "powershell",
+      [
+          "-c",
+          "Get-CimInstance Win32_VideoController | Select-Object CurrentVerticalResolution",
+      ],
+  ))?;
     let h = s.trim().lines().last()?.trim();
     Some(format!("{w}x{h}"))
 }

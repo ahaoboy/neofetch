@@ -2,7 +2,13 @@ use crate::share::exec;
 
 #[cfg(windows)]
 pub fn get_gpu() -> Option<String> {
-    let s = exec("wmic", ["path", "Win32_VideoController", "get", "caption"])?;
+    let s = exec("wmic", ["path", "Win32_VideoController", "get", "caption"]).or(exec(
+      "powershell",
+      [
+          "-c",
+          "Get-CimInstance Win32_VideoController | Select-Object caption",
+      ],
+  ))?;
     s.lines()
         .last()?
         .replace("Microsoft ", "")

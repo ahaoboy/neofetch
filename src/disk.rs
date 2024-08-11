@@ -23,21 +23,27 @@ use crate::share::exec;
 #[cfg(windows)]
 pub fn get_disk() -> Option<Vec<Disk>> {
     use regex::Regex;
-    let s = exec("wmic", ["logicaldisk", "get", "deviceid,freespace,size"])?;
+    let s = exec("wmic", ["logicaldisk", "get", "deviceid,freespace,size"]).or(exec(
+        "powershell",
+        [
+            "-c",
+            "Get-CimInstance Win32_logicaldisk | Select-Object deviceid,freespace,size",
+        ],
+    ))?;
     let mut v = vec![];
-    for line in s.lines().skip(1) {
+    let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)").ok()?;
+    for line in s.lines() {
         let s = line.trim().to_string();
-        let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)").ok()?;
-        let cap = re.captures(&s)?;
-        let name = cap.get(1).unwrap().as_str().to_string();
-
-        if let (Ok(free), Ok(total)) = (
-            cap.get(2).unwrap().as_str().parse::<u64>(),
-            cap.get(3).unwrap().as_str().parse::<u64>(),
-        ) {
-            let used = total - free;
-            let disk = Disk { name, used, total };
-            v.push(disk);
+        if let Some(cap) = re.captures(&s) {
+            let name = cap.get(1).unwrap().as_str().to_string();
+            if let (Ok(free), Ok(total)) = (
+                cap.get(2).unwrap().as_str().parse::<u64>(),
+                cap.get(3).unwrap().as_str().parse::<u64>(),
+            ) {
+                let used = total - free;
+                let disk = Disk { name, used, total };
+                v.push(disk);
+            }
         }
     }
 
