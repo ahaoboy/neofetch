@@ -8,12 +8,6 @@ description = "neofetch"
 homepage = "https://github.com/ahaoboy/neofetch"
 authors = ["ahaoboy"]
 
-[package.metadata.wix]
-upgrade-guid = "1BA00A2B-CDC4-472F-A47F-D290EA84DE64"
-path-guid = "A2565379-B121-4156-8A5E-E4C73189F5DF"
-license = false
-eula = false
-
 [dependencies]
 human_bytes = "0.4"
 regex = "1.10.4"
@@ -26,22 +20,3 @@ glfw = "0.56.0"
 [profile.dist]
 inherits = "release"
 lto = "thin"
-
-# Config for 'cargo dist'
-[workspace.metadata.dist]
-# The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.15.1"
-# CI backends to support
-ci = "github"
-# The installers to generate for each app
-installers = []
-# Target platforms to build apps for (Rust target-triple syntax)
-targets = ["x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
-# The archive format to use for windows builds (defaults .zip)
-windows-archive = ".tar.gz"
-# The archive format to use for non-windows builds (defaults .tar.xz)
-unix-archive = ".tar.gz"
-# Publish jobs to run in CI
-pr-run-mode = "plan"
-# Whether to install an updater program
-install-updater = false
