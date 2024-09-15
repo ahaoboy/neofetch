@@ -9,7 +9,7 @@ pub enum Distro {
     Linux,
     Android,
     Unix,
-    Mac,
+    Darwin,
     Unknown,
 }
 
@@ -21,7 +21,7 @@ impl Display for Distro {
             Distro::Android => "Android",
             Distro::Linux => "Linux",
             Distro::Unix => "Unix",
-            Distro::Mac => "Mac",
+            Distro::Darwin => "Darwin",
             Distro::Unknown => "Unknown",
         };
         f.write_str(s)
@@ -109,7 +109,7 @@ pub fn get_os() -> Option<OS> {
             }
             "Darwin" => {
                 return Some(OS {
-                    distro: Distro::Mac,
+                    distro: Distro::Darwin,
                     arch,
                     version: "".into(),
                 });
