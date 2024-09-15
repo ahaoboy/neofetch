@@ -124,7 +124,7 @@ pub fn neofetch() -> String {
         info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
     }
 
-    if let Some(uptime)= get_uptime() {
+    if let Some(uptime) = get_uptime() {
         if uptime.0 > 0 {
             info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
         }
@@ -174,10 +174,12 @@ pub fn neofetch() -> String {
     if let Some(disks) = get_disk() {
         if !disks.is_empty() {
             for disk in disks {
-                info.push_str(&format!(
-                    "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
-                    disk.name, disk
-                ));
+                if disk.total > 0 {
+                    info.push_str(&format!(
+                        "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
+                        disk.name, disk
+                    ));
+                }
             }
         }
     }
