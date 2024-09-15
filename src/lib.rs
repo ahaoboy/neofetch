@@ -124,8 +124,10 @@ pub fn neofetch() -> String {
         info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
     }
 
-    if let Some(uptime) = get_uptime() {
-        info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+    if let Some(uptime)= get_uptime() {
+        if uptime.0 > 0 {
+            info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+        }
     }
     if let Some(packages) = get_packages() {
         let s = packages.to_string();

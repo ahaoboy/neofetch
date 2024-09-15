@@ -22,6 +22,14 @@ neofetch
 	</a>
 </div>
 
+### darwin
+
+<div align="center">
+	<a href="https://github.com/ahaoboy/neofetch">
+		<img src="assets/darwin.svg">
+	</a>
+</div>
+
 ### android
 
 <div align="center">

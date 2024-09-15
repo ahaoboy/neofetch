@@ -1,13 +1,55 @@
+use crate::share::exec;
+use std::fmt::Display;
 const ONE_MINUTE: u64 = 60;
 const ONE_HOUR: u64 = 60 * 60;
 const ONE_DAY: u64 = 60 * 60 * 24;
-use crate::share::exec;
+
+pub struct Time(pub u64);
+
+impl Display for Time {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0 < ONE_MINUTE {
+            return f.write_str(&with_unit(self.0, "sec"));
+        }
+
+        if self.0 < ONE_HOUR {
+            let min = self.0 / ONE_MINUTE;
+            let sec = self.0 - min * ONE_MINUTE;
+            return f.write_str(&format!(
+                "{} {}",
+                with_unit(min, "min"),
+                with_unit(sec, "sec")
+            ));
+        }
+
+        if self.0 < ONE_DAY {
+            let hour = self.0 / ONE_HOUR;
+            let min = (self.0 - hour * ONE_HOUR) / ONE_MINUTE;
+            let sec = self.0 - hour * ONE_HOUR - min * ONE_MINUTE;
+            return f.write_str(&format!(
+                "{}, {}, {}",
+                with_unit(hour, "hour"),
+                with_unit(min, "min"),
+                with_unit(sec, "sec")
+            ));
+        }
+        let day = self.0 / ONE_DAY;
+        let hour = (self.0 - day * ONE_DAY) / ONE_HOUR;
+        let min = (self.0 - day * ONE_DAY - hour * ONE_HOUR) / ONE_MINUTE;
+        f.write_str(&format!(
+            "{}, {}, {}",
+            with_unit(day, "day"),
+            with_unit(hour, "hour"),
+            with_unit(min, "min")
+        ))
+    }
+}
 
 fn with_unit(n: u64, unit: &str) -> String {
     format!("{n} {unit}{}", if n > 1 { "s" } else { "" })
 }
 
-pub fn get_uptime() -> Option<String> {
+pub fn get_uptime() -> Option<Time> {
     let mut time: u64 = 0;
     if let Some(uptime) = exec("cat", ["/proc/uptime"]) {
         if !uptime.is_empty() {
@@ -27,37 +69,5 @@ pub fn get_uptime() -> Option<String> {
         }
     }
 
-    if time < ONE_MINUTE {
-        return Some(with_unit(time, "sec"));
-    }
-    if time < ONE_HOUR {
-        let min = time / ONE_MINUTE;
-        let sec = time - min * ONE_MINUTE;
-        return Some(format!(
-            "{} {}",
-            with_unit(min, "min"),
-            with_unit(sec, "sec")
-        ));
-    }
-
-    if time < ONE_DAY {
-        let hour = time / ONE_HOUR;
-        let min = (time - hour * ONE_HOUR) / ONE_MINUTE;
-        let sec = time - hour * ONE_HOUR - min * ONE_MINUTE;
-        return Some(format!(
-            "{}, {}, {}",
-            with_unit(hour, "hour"),
-            with_unit(min, "min"),
-            with_unit(sec, "sec")
-        ));
-    }
-    let day = time / ONE_DAY;
-    let hour = (time - day * ONE_DAY) / ONE_HOUR;
-    let min = (time - day * ONE_DAY - hour * ONE_HOUR) / ONE_MINUTE;
-    Some(format!(
-        "{}, {}, {}",
-        with_unit(day, "day"),
-        with_unit(hour, "hour"),
-        with_unit(min, "min")
-    ))
+    Some(Time(time))
 }
