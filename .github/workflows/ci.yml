@@ -10,25 +10,25 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  ubuntu:
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
           override: true
       - name: Run
-        run: cargo run
-  windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+        run: |
+          npm i ansi2 -g
+          cargo run | ansi2 > neofetch.svg
+      - name: Upload
+        uses: actions/upload-artifact@v4
         with:
-          toolchain: nightly
-          override: true
-      - name: Run
-        run: cargo run
+          name: ${{ matrix.os }}
+          path: ./*.svg
