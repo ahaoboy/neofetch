@@ -50,27 +50,27 @@ pub fn get_disk() -> Option<Vec<Disk>> {
     Some(v)
 }
 
+#[cfg(target_os = "linux")]
+const DISK_SKIP: [&str; 1] = ["tmpfs"];
+
+#[cfg(target_os = "android")]
+const DISK_SKIP: [&str; 2] = ["overlay", "/dev/block"];
+
+#[cfg(target_os = "macos")]
+const DISK_SKIP: [&str; 1] = ["devfs"];
+
 #[cfg(unix)]
 pub fn get_disk() -> Option<Vec<Disk>> {
     use regex::Regex;
     let s = exec("df", [])?;
 
-    let skip = [
-        // linux
-        "tmpfs",
-        // android
-        "overlay",
-        "/dev/block",
-        // darwin
-        "devfs",
-    ];
     let mut v = vec![];
     for line in s.lines().skip(1) {
         let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)\s+([0-9]+).*?").ok()?;
         let cap = re.captures(line.trim())?;
         let name = cap.get(1).unwrap().as_str().to_string();
 
-        if skip.iter().any(|i| line.starts_with(i)) {
+        if DISK_SKIP.iter().any(|i| line.starts_with(i)) {
             continue;
         }
 
