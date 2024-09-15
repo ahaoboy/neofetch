@@ -61,6 +61,8 @@ pub fn get_disk() -> Option<Vec<Disk>> {
         // android
         "overlay",
         "/dev/block",
+        // darwin
+        "devfs",
     ];
     let mut v = vec![];
     for line in s.lines().skip(1) {
