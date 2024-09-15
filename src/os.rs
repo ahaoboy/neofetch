@@ -107,6 +107,13 @@ pub fn get_os() -> Option<OS> {
                     version: "".into(),
                 });
             }
+            "Darwin" => {
+                return Some(OS {
+                    distro: Distro::Mac,
+                    arch,
+                    version: "".into(),
+                });
+            }
             _ => {}
         }
     }
