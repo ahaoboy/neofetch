@@ -28,7 +28,7 @@ jobs:
             os: macos-latest
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            RUSTFLAGS: -C target-feature=+crt-static
+            # RUSTFLAGS: -C target-feature=+crt-static
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
           - target: aarch64-unknown-linux-gnu
