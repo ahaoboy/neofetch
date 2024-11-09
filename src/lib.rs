@@ -86,7 +86,7 @@ pub fn neofetch() -> String {
     let hostname = get_hostname().unwrap_or_default();
 
     info.push_str(&format!(
-        "{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
+        "{RESET}{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
     ));
     info.push_str("-------\n");
     if let Some(os) = get_os() {
