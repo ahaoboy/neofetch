@@ -41,7 +41,7 @@ use crate::icon::{Windows, Windows_10, Windows_11};
 use crate::kernel::get_kernel;
 use crate::memory::get_memory;
 use crate::packages::get_packages;
-use crate::shell::get_shell;
+use crate::shell::which_shell;
 use crate::terminal::get_terminal;
 use crate::uptime::get_uptime;
 use crate::user::get_user;
@@ -135,7 +135,7 @@ pub fn neofetch() -> String {
             info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{}\n", s));
         }
     }
-    if let Some(shell) = get_shell() {
+    if let Some(shell) = which_shell() {
         info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{}\n", shell));
     }
 
