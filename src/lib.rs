@@ -141,13 +141,15 @@ pub fn neofetch() -> String {
 
     if let Some(displays) = get_display() {
         for display in displays {
-            let key = display
-                .name
-                .clone()
-                .map_or(format!("{GREEN}{BOLD}Display"), |s| {
+            let key = if let Some(i) = &display.friendly_name {
+                format!("{GREEN}{BOLD}Display({i})")
+            } else {
+                (&display).name.clone().map_or(format!("{GREEN}{BOLD}Display"), |s| {
                     format!("{GREEN}{BOLD}Display({s})")
-                });
-            info.push_str(&format!("{key}: {RESET}{}\n", display));
+                })
+            };
+
+            info.push_str(&format!("{key}: {RESET}{}\n", &display));
         }
     }
 

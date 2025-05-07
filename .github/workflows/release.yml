@@ -3,10 +3,11 @@ name: Release
 permissions:
   contents: write
 
-on:
-  push:
-    tags:
-      - v[0-9]+.*
+on: [push]
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
   create-release:
@@ -14,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/create-gh-release-action@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -23,20 +25,35 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
           - target: x86_64-apple-darwin
-            os: macos-latest
+            os: macos-13
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            # RUSTFLAGS: -C target-feature=+crt-static
+            RUSTFLAGS: -C target-feature=+crt-static
           - target: aarch64-unknown-linux-musl
-            os: ubuntu-latest
+            os: ubuntu-24.04
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
+          - target: aarch64-apple-darwin
+            os: macos-14
+          - target: x86_64-pc-windows-gnu
+            os: windows-latest
+          - target: aarch64-linux-android
+            os: ubuntu-24.04
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: '-A warnings'
+          toolchain: 'stable'
+      - name: run
+        run: |
+          cargo run -q
       - uses: taiki-e/upload-rust-binary-action@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           bin: neofetch
           target: ${{ matrix.target }}
