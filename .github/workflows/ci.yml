@@ -30,6 +30,7 @@ jobs:
       - name: Run
         run: |
           npm i ansi2 -g
+          cargo run -q
           cargo run -q | ansi2 > neofetch.svg
 
       - name: Upload
