@@ -22,10 +22,16 @@ jobs:
         with:
           toolchain: nightly
           override: true
+      - name: install ubuntu
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          apt-get install libxcb1 libxrandr2 -y
+
       - name: Run
         run: |
           npm i ansi2 -g
-          cargo run | ansi2 > neofetch.svg
+          cargo run -q | ansi2 > neofetch.svg
+
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
