@@ -14,10 +14,13 @@ regex = "1"
 ansi-width = "0.1"
 which-shell = "0.1"
 
-[target.'cfg(target_os = "windows")'.dependencies]
-glfw = { version = "0.59" }
+[target.'cfg(not(target_os = "android"))'.dependencies]
+display-info = { version = "0.5", git = "https://github.com/nashaofu/display-info.git" }
 
 # The profile that 'cargo dist' will build with
-[profile.dist]
-inherits = "release"
-lto = "thin"
+[profile.release]
+debug = false
+lto = true
+strip = true
+opt-level = 3
+codegen-units = 1

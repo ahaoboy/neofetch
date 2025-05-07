@@ -1,11 +1,12 @@
 #[derive(Debug, Clone)]
 pub struct Display {
     pub name: Option<String>,
-    pub refresh_rate: Option<u32>,
+    pub friendly_name: Option<String>,
+    pub refresh_rate: Option<f32>,
     pub external: Option<bool>,
     pub resolution: Option<(u32, u32)>,
     pub scale_resolution: Option<(u32, u32)>,
-    pub rotation: Option<u32>,
+    pub rotation: Option<f32>,
     pub primary: Option<bool>,
 }
 
@@ -35,54 +36,36 @@ impl std::fmt::Display for Display {
     }
 }
 
-#[cfg(windows)]
+#[cfg(not(target_os = "android"))]
 pub fn get_display() -> Option<Vec<Display>> {
-    use glfw::ffi::GLFWmonitor;
+    use display_info::DisplayInfo;
 
-    fn get_ptr(m: &glfw::Monitor) -> usize {
-        pub struct A {
-            ptr: *mut GLFWmonitor,
-        }
-        let a = m as *const _ as *const A;
-        unsafe { (*a).ptr as usize }
-    }
+    let display_infos = DisplayInfo::all().ok()?;
 
-    let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
-
-    let p = glfw
-        .with_primary_monitor(|_, m: Option<&mut glfw::Monitor>| m.map(|i| get_ptr(i)))
-        .unwrap_or_default();
-
-    let v = glfw.with_connected_monitors(|_, monitors| {
-        monitors
-            .iter()
-            .map(|monitor| {
-                let mode = monitor.get_video_mode().unwrap();
-                let refresh_rate = mode.refresh_rate;
-                let resolution = (mode.width, mode.height);
-                let scale = monitor.get_content_scale();
-                let scale_resolution = (
-                    (resolution.0 as f32 / scale.0) as u32,
-                    (resolution.1 as f32 / scale.1) as u32,
-                );
-                let primary = get_ptr(monitor) == p;
-
-                Display {
-                    name: monitor.get_name(),
-                    refresh_rate: Some(refresh_rate),
-                    external: None,
-                    resolution: Some(resolution),
-                    scale_resolution: Some(scale_resolution),
-                    rotation: None,
-                    primary: Some(primary),
-                }
-            })
-            .collect::<Vec<_>>()
-    });
+    let v: Vec<_> = display_infos
+        .iter()
+        .map(|i| Display {
+            name: Some(i.name.clone()),
+            friendly_name: if i.friendly_name.starts_with("Unknown Display") {
+                None
+            } else {
+                Some(i.friendly_name.clone())
+            },
+            refresh_rate: Some(i.frequency),
+            external: None,
+            resolution: Some((i.width, i.height)),
+            scale_resolution: Some((
+                (i.scale_factor * i.width as f32) as u32,
+                (i.scale_factor * i.height as f32) as u32,
+            )),
+            rotation: Some(i.rotation),
+            primary: Some(i.is_primary),
+        })
+        .collect();
     Some(v)
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "android")]
 pub fn get_display() -> Option<Vec<Display>> {
     None
 }
