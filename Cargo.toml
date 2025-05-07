@@ -15,7 +15,7 @@ ansi-width = "0.1"
 which-shell = "0.1"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
-display-info = { git = "https://github.com/nashaofu/display-info.git" }
+display-info = { version = "0.5", git = "https://github.com/nashaofu/display-info.git" }
 
 # The profile that 'cargo dist' will build with
 [profile.release]
