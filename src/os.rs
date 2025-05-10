@@ -1,6 +1,6 @@
 use std::fmt::Display;
+use tracing::instrument;
 
-use crate::share::exec;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Distro {
@@ -44,14 +44,20 @@ impl Display for OS {
     }
 }
 #[cfg(windows)]
-pub fn get_os() -> Option<OS> {
-    let s = exec("wmic", ["os", "get", "Caption"]).or(exec(
-        "powershell",
-        [
-            "-c",
-            "Get-CimInstance Win32_OperatingSystem | Select-Object Caption",
-        ],
-    ))?;
+#[instrument]
+pub async fn get_os() -> Option<OS> {
+    use crate::share::exec_async;
+
+    let s = exec_async("wmic", ["os", "get", "Caption"])
+        .await
+        .or(exec_async(
+            "powershell",
+            [
+                "-c",
+                "Get-CimInstance Win32_OperatingSystem | Select-Object Caption",
+            ],
+        )
+        .await)?;
 
     let s = s.trim().lines().last()?.trim();
     if s.starts_with("Microsoft Windows 11") {
@@ -78,6 +84,7 @@ pub fn get_os() -> Option<OS> {
 }
 
 #[cfg(unix)]
+#[instrument]
 pub fn get_os() -> Option<OS> {
     if let (Some(dis), Some(arch)) = (exec("uname", ["-o"]), exec("uname", ["-m"])) {
         match dis.as_str() {

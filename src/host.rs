@@ -1,37 +1,43 @@
-use crate::share::exec;
+use tracing::instrument;
+use crate::share::exec_async;
+
 #[cfg(windows)]
-pub fn get_host() -> Option<String> {
-    let s = exec("wmic", ["computersystem", "get", "manufacturer"]).or(exec(
-      "powershell",
-      [
-          "-c",
-          "Get-CimInstance Win32_computersystem | Select-Object manufacturer",
-      ],
-  ))?;
+#[instrument]
+pub async fn get_host() -> Option<String> {
+    let s = exec_async("wmic", ["computersystem", "get", "manufacturer"]).await.or(exec_async(
+        "powershell",
+        [
+            "-c",
+            "Get-CimInstance Win32_computersystem | Select-Object manufacturer",
+        ],
+    ).await)?;
     s.lines().last()?.trim().to_string().into()
 }
 
 #[cfg(windows)]
-pub fn get_rom() -> Option<String> {
+pub async fn get_rom() -> Option<String> {
     None
 }
 
 #[cfg(windows)]
-pub fn get_baseband() -> Option<String> {
+pub async fn get_baseband() -> Option<String> {
     None
 }
 
 #[cfg(unix)]
+#[instrument]
 pub fn get_rom() -> Option<String> {
     exec("getprop", ["ro.build.display.id"])
 }
 
 #[cfg(unix)]
+#[instrument]
 pub fn get_baseband() -> Option<String> {
     exec("getprop", ["ro.baseband"])
 }
 
 #[cfg(unix)]
+#[instrument]
 pub fn get_host() -> Option<String> {
     if let (Some(name), Some(version)) = (
         exec("cat", ["/sys/devices/virtual/dmi/id/board_name"]),

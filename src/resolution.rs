@@ -1,8 +1,11 @@
-use crate::share::exec;
+use tracing::instrument;
 
 #[cfg(windows)]
-pub fn get_resolution() -> Option<String> {
-    let s = exec(
+#[instrument]
+pub async fn get_resolution() -> Option<String> {
+    use crate::share::exec_async;
+
+    let s = exec_async(
         "wmic",
         [
             "path",
@@ -10,16 +13,19 @@ pub fn get_resolution() -> Option<String> {
             "get",
             "CurrentHorizontalResolution",
         ],
-    ).or(exec(
-      "powershell",
-      [
-          "-c",
-          "Get-CimInstance Win32_VideoController | Select-Object CurrentHorizontalResolution",
-      ],
-  ))?;
+    )
+    .await
+    .or(exec_async(
+        "powershell",
+        [
+            "-c",
+            "Get-CimInstance Win32_VideoController | Select-Object CurrentHorizontalResolution",
+        ],
+    )
+    .await)?;
 
     let w = s.trim().lines().last()?.trim();
-    let s = exec(
+    let s = exec_async(
         "wmic",
         [
             "path",
@@ -27,18 +33,20 @@ pub fn get_resolution() -> Option<String> {
             "get",
             "CurrentVerticalResolution",
         ],
-    ).or(exec(
-      "powershell",
-      [
-          "-c",
-          "Get-CimInstance Win32_VideoController | Select-Object CurrentVerticalResolution",
-      ],
-  ))?;
+    ).await
+    .or(exec_async(
+        "powershell",
+        [
+            "-c",
+            "Get-CimInstance Win32_VideoController | Select-Object CurrentVerticalResolution",
+        ],
+    ).await)?;
     let h = s.trim().lines().last()?.trim();
     Some(format!("{w}x{h}"))
 }
 
 #[cfg(unix)]
+#[instrument]
 pub fn get_resolution() -> Option<String> {
     use regex::Regex;
     if let Some(s) = exec("xrandr", ["--nograb", "--current"]) {

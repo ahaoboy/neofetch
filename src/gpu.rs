@@ -1,14 +1,17 @@
-use crate::share::exec;
+use tracing::instrument;
 
 #[cfg(windows)]
-pub fn get_gpu() -> Option<String> {
-    let s = exec("wmic", ["path", "Win32_VideoController", "get", "caption"]).or(exec(
-      "powershell",
-      [
-          "-c",
-          "Get-CimInstance Win32_VideoController | Select-Object caption",
-      ],
-  ))?;
+#[instrument]
+pub async fn get_gpu() -> Option<String> {
+    use crate::share::exec_async;
+
+    let s = exec_async("wmic", ["path", "Win32_VideoController", "get", "caption"]).await.or(exec_async(
+        "powershell",
+        [
+            "-c",
+            "Get-CimInstance Win32_VideoController | Select-Object caption",
+        ],
+    ).await)?;
     s.lines()
         .last()?
         .replace("Microsoft ", "")
@@ -17,6 +20,7 @@ pub fn get_gpu() -> Option<String> {
         .into()
 }
 #[cfg(unix)]
+#[instrument]
 pub fn get_gpu() -> Option<String> {
     use regex::Regex;
 

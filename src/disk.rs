@@ -18,18 +18,23 @@ use std::fmt::Display;
 
 use human_bytes::human_bytes;
 
-use crate::share::exec;
-
+use tracing::instrument;
 #[cfg(windows)]
-pub fn get_disk() -> Option<Vec<Disk>> {
+#[instrument]
+pub async fn get_disk() -> Option<Vec<Disk>> {
     use regex::Regex;
-    let s = exec("wmic", ["logicaldisk", "get", "deviceid,freespace,size"]).or(exec(
-        "powershell",
-        [
-            "-c",
-            "Get-CimInstance Win32_logicaldisk | Select-Object deviceid,freespace,size",
-        ],
-    ))?;
+
+    use crate::share::exec_async;
+    let s = exec_async("wmic", ["logicaldisk", "get", "deviceid,freespace,size"])
+        .await
+        .or(exec_async(
+            "powershell",
+            [
+                "-c",
+                "Get-CimInstance Win32_logicaldisk | Select-Object deviceid,freespace,size",
+            ],
+        )
+        .await)?;
     let mut v = vec![];
     let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)").ok()?;
     for line in s.lines() {
@@ -60,6 +65,7 @@ const DISK_SKIP: [&str; 2] = ["overlay", "/dev/block"];
 const DISK_SKIP: [&str; 1] = ["devfs"];
 
 #[cfg(unix)]
+#[instrument]
 pub fn get_disk() -> Option<Vec<Disk>> {
     use regex::Regex;
     let s = exec("df", [])?;

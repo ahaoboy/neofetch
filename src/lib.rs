@@ -19,9 +19,15 @@ pub mod terminal;
 pub mod uptime;
 pub mod user;
 pub mod wm;
+use disk::Disk;
+use os::OS;
+use packages::Packages;
+use tracing::instrument;
 
-use display::get_display;
+use display::{get_display, Display};
 use icon::Darwin;
+use uptime::Time;
+use which_shell::ShellVersion;
 
 use crate::battery::get_battery;
 use crate::color::{
@@ -35,7 +41,6 @@ use crate::de::get_de;
 use crate::disk::get_disk;
 use crate::host::get_host;
 use crate::host::{get_baseband, get_rom};
-use crate::hostname::get_hostname;
 use crate::icon::{Android, Linux, Ubuntu};
 use crate::icon::{Windows, Windows_10, Windows_11};
 use crate::kernel::get_kernel;
@@ -48,6 +53,7 @@ use crate::user::get_user;
 use crate::wm::{get_wm, get_wm_theme};
 use crate::{gpu::get_gpu, os::get_os};
 
+#[instrument]
 pub fn join(left: String, right: String) -> String {
     let mut s = String::new();
     let left_h = left.lines().count();
@@ -79,152 +85,253 @@ pub fn join(left: String, right: String) -> String {
     s
 }
 
-pub fn neofetch() -> String {
-    let mut info: String = String::new();
-    let mut icon = String::new();
-    let user = get_user().unwrap_or_default();
-    let hostname = get_hostname().unwrap_or_default();
+#[derive(Debug, Clone)]
+pub struct Neofetch {
+    pub os: Option<OS>,
+    pub user: Option<String>,
+    pub host: Option<String>,
+    pub rom: Option<String>,
+    pub baseband: Option<String>,
+    pub kernel: Option<String>,
+    pub uptime: Option<Time>,
+    pub packages: Option<Packages>,
+    pub shell: Option<ShellVersion>,
+    pub display: Option<Vec<Display>>,
+    pub de: Option<String>,
+    pub wm: Option<String>,
+    pub wm_theme: Option<String>,
+    pub terminal: Option<String>,
+    pub disk: Option<Vec<Disk>>,
+    pub cpu: Option<String>,
+    pub gpu: Option<String>,
+    pub memory: Option<String>,
+    pub battery: Option<String>,
+}
 
-    info.push_str(&format!(
-        "{RESET}{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
-    ));
-    info.push_str("-------\n");
-    if let Some(os) = get_os() {
-        let s = os.to_string();
-        info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{s}\n"));
-        if s.starts_with("Windows 11") {
-            icon = Windows_11()
-        } else if s.starts_with("Windows 10") {
-            icon = Windows_10()
-        } else if s.starts_with("Windows") {
-            icon = Windows()
-        } else if s.starts_with("Android") {
-            icon = Android()
-        } else if s.starts_with("Ubuntu") {
-            icon = Ubuntu()
-        } else if s.starts_with("Linux") {
-            icon = Linux()
-        } else if s.starts_with("Darwin") {
-            icon = Darwin()
+impl Neofetch {
+    #[instrument]
+    pub async fn new() -> Neofetch {
+        let (
+            os,
+            user,
+            host,
+            rom,
+            baseband,
+            kernel,
+            uptime,
+            packages,
+            shell,
+            display,
+            de,
+            wm,
+            wm_theme,
+            terminal,
+            disk,
+            cpu,
+            gpu,
+            memory,
+            battery,
+        ) = tokio::join!(
+            get_os(),
+            get_user(),
+            get_host(),
+            get_rom(),
+            get_baseband(),
+            get_kernel(),
+            get_uptime(),
+            get_packages(),
+            which_shell(),
+            get_display(),
+            get_de(),
+            get_wm(),
+            get_wm_theme(),
+            get_terminal(),
+            get_disk(),
+            get_cpu(),
+            get_gpu(),
+            get_memory(),
+            get_battery(),
+        );
+        Neofetch {
+            os,
+            user,
+            host,
+            rom,
+            baseband,
+            kernel,
+            uptime,
+            packages,
+            shell,
+            display,
+            de,
+            wm,
+            wm_theme,
+            terminal,
+            disk,
+            cpu,
+            gpu,
+            memory,
+            battery,
         }
     }
+}
 
-    if let Some(host) = get_host() {
-        info.push_str(&format!("{GREEN}{BOLD}Host: {RESET}{host}\n"));
-    }
-    if let Some(rom) = get_rom() {
-        info.push_str(&format!("{GREEN}{BOLD}Rom: {RESET}{rom}\n"));
-    }
+impl std::fmt::Display for Neofetch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut info: String = String::new();
+        let mut icon = String::new();
+        let user = self.user.clone().unwrap_or_default();
+        let hostname = self.host.clone().unwrap_or_default();
 
-    if let Some(baseband) = get_baseband() {
-        info.push_str(&format!("{GREEN}{BOLD}Baseband: {RESET}{baseband}\n"));
-    }
-
-    if let Some(kernel) = get_kernel() {
-        info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
-    }
-
-    if let Some(uptime) = get_uptime() {
-        if uptime.0 > 0 {
-            info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+        info.push_str(&format!(
+            "{RESET}{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
+        ));
+        info.push_str("-------\n");
+        if let Some(os) = &self.os {
+            let s = os.to_string();
+            info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{s}\n"));
+            if s.starts_with("Windows 11") {
+                icon = Windows_11()
+            } else if s.starts_with("Windows 10") {
+                icon = Windows_10()
+            } else if s.starts_with("Windows") {
+                icon = Windows()
+            } else if s.starts_with("Android") {
+                icon = Android()
+            } else if s.starts_with("Ubuntu") {
+                icon = Ubuntu()
+            } else if s.starts_with("Linux") {
+                icon = Linux()
+            } else if s.starts_with("Darwin") {
+                icon = Darwin()
+            }
         }
-    }
-    if let Some(packages) = get_packages() {
-        let s = packages.to_string();
-        if !s.trim().is_empty() {
-            info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{}\n", s));
+
+        if let Some(host) = &self.host {
+            info.push_str(&format!("{GREEN}{BOLD}Host: {RESET}{host}\n"));
         }
-    }
-    if let Some(shell) = which_shell() {
-        info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{}\n", shell));
-    }
-
-    if let Some(displays) = get_display() {
-        for display in displays {
-            let key = if let Some(i) = &display.friendly_name {
-                format!("{GREEN}{BOLD}Display({i})")
-            } else {
-                (&display).name.clone().map_or(format!("{GREEN}{BOLD}Display"), |s| {
-                    format!("{GREEN}{BOLD}Display({s})")
-                })
-            };
-
-            info.push_str(&format!("{key}: {RESET}{}\n", &display));
+        if let Some(rom) = &self.rom {
+            info.push_str(&format!("{GREEN}{BOLD}Rom: {RESET}{rom}\n"));
         }
-    }
 
-    // if let Some(resolution) = get_resolution() {
-    //     info.push_str(&format!("{GREEN}{BOLD}Resolution: {RESET}{resolution}\n"));
-    // }
-
-    if let Some(de) = get_de() {
-        info.push_str(&format!("{GREEN}{BOLD}DE: {RESET}{de}\n"));
-    }
-
-    if let Some(wm) = get_wm() {
-        info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm}\n"));
-
-        if let Some(theme) = get_wm_theme() {
-            info.push_str(&format!("{GREEN}{BOLD}WM Theme: {RESET}{theme}\n"));
+        if let Some(baseband) = &self.baseband {
+            info.push_str(&format!("{GREEN}{BOLD}Baseband: {RESET}{baseband}\n"));
         }
-    }
 
-    if let Some(terminal) = get_terminal() {
-        info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
-    }
+        if let Some(kernel) = &self.kernel {
+            info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
+        }
 
-    if let Some(disks) = get_disk() {
-        if !disks.is_empty() {
-            for disk in disks {
-                if disk.total > 0 {
-                    info.push_str(&format!(
-                        "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
-                        disk.name, disk
-                    ));
+        if let Some(uptime) = self.uptime {
+            if uptime.0 > 0 {
+                info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+            }
+        }
+        if let Some(packages) = &self.packages {
+            let s = packages.to_string();
+            if !s.trim().is_empty() {
+                info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{}\n", s));
+            }
+        }
+        if let Some(shell) = &self.shell {
+            info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{}\n", shell));
+        }
+
+        if let Some(displays) = &self.display {
+            for display in displays {
+                let key = if let Some(i) = &display.friendly_name {
+                    format!("{GREEN}{BOLD}Display({i})")
+                } else {
+                    display
+                        .name
+                        .clone()
+                        .map_or(format!("{GREEN}{BOLD}Display"), |s| {
+                            format!("{GREEN}{BOLD}Display({s})")
+                        })
+                };
+
+                info.push_str(&format!("{key}: {RESET}{}\n", &display));
+            }
+        }
+
+        // if let Some(resolution) = get_resolution() {
+        //     info.push_str(&format!("{GREEN}{BOLD}Resolution: {RESET}{resolution}\n"));
+        // }
+
+        if let Some(de) = &self.de {
+            info.push_str(&format!("{GREEN}{BOLD}DE: {RESET}{de}\n"));
+        }
+
+        if let Some(wm) = &self.wm {
+            info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm}\n"));
+
+            if let Some(theme) = &self.wm_theme {
+                info.push_str(&format!("{GREEN}{BOLD}WM Theme: {RESET}{theme}\n"));
+            }
+        }
+
+        if let Some(terminal) = &self.terminal {
+            info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
+        }
+
+        if let Some(disks) = &self.disk {
+            if !disks.is_empty() {
+                for disk in disks {
+                    if disk.total > 0 {
+                        info.push_str(&format!(
+                            "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
+                            disk.name, disk
+                        ));
+                    }
                 }
             }
         }
+
+        if let Some(cpu) = &self.cpu {
+            info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
+        }
+
+        if let Some(gpu) = &self.gpu {
+            info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{gpu}\n"));
+        }
+
+        if let Some(memory) = &self.memory {
+            info.push_str(&format!("{GREEN}{BOLD}Memory: {RESET}{memory}\n"));
+        }
+
+        if let Some(battery) = &self.battery {
+            info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
+        }
+
+        let color_str: String = [
+            BLACK_BG, RED_BG, GREEN_BG, YELLOW_BG, BLUE_BG, MAGENTA_BG, CYAN_BG, WHITE_BG,
+        ]
+        .map(|c| format!("{c}   "))
+        .into_iter()
+        .collect();
+        info.push('\n');
+
+        info.push_str(&(color_str + RESET + "\n"));
+        let color_str: String = [
+            BRIGHT_BLACK_BG,
+            BRIGHT_RED_BG,
+            BRIGHT_GREEN_BG,
+            BRIGHT_YELLOW_BG,
+            BRIGHT_BLUE_BG,
+            BRIGHT_MAGENTA_BG,
+            BRIGHT_CYAN_BG,
+            BRIGHT_WHITE_BG,
+        ]
+        .map(|c| format!("{c}   "))
+        .into_iter()
+        .collect();
+        info.push_str(&(color_str + RESET + "\n"));
+
+        f.write_str(&join(icon, info))
     }
+}
 
-    if let Some(cpu) = get_cpu() {
-        info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
-    }
-
-    if let Some(gpu) = get_gpu() {
-        info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{gpu}\n"));
-    }
-
-    if let Some(memory) = get_memory() {
-        info.push_str(&format!("{GREEN}{BOLD}Memory: {RESET}{memory}\n"));
-    }
-
-    if let Some(battery) = get_battery() {
-        info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
-    }
-
-    let color_str: String = [
-        BLACK_BG, RED_BG, GREEN_BG, YELLOW_BG, BLUE_BG, MAGENTA_BG, CYAN_BG, WHITE_BG,
-    ]
-    .map(|c| format!("{c}   "))
-    .into_iter()
-    .collect();
-    info.push('\n');
-
-    info.push_str(&(color_str + RESET + "\n"));
-    let color_str: String = [
-        BRIGHT_BLACK_BG,
-        BRIGHT_RED_BG,
-        BRIGHT_GREEN_BG,
-        BRIGHT_YELLOW_BG,
-        BRIGHT_BLUE_BG,
-        BRIGHT_MAGENTA_BG,
-        BRIGHT_CYAN_BG,
-        BRIGHT_WHITE_BG,
-    ]
-    .map(|c| format!("{c}   "))
-    .into_iter()
-    .collect();
-    info.push_str(&(color_str + RESET + "\n"));
-
-    join(icon, info)
+#[instrument]
+pub async fn neofetch() -> String {
+    Neofetch::new().await.to_string()
 }

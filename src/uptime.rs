@@ -1,9 +1,10 @@
-use crate::share::exec;
+use crate::share::{exec, exec_async};
 use std::fmt::Display;
 const ONE_MINUTE: u64 = 60;
 const ONE_HOUR: u64 = 60 * 60;
 const ONE_DAY: u64 = 60 * 60 * 24;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Time(pub u64);
 
 impl Display for Time {
@@ -48,10 +49,11 @@ impl Display for Time {
 fn with_unit(n: u64, unit: &str) -> String {
     format!("{n} {unit}{}", if n > 1 { "s" } else { "" })
 }
-
-pub fn get_uptime() -> Option<Time> {
+use tracing::instrument;
+#[instrument]
+pub async fn get_uptime() -> Option<Time> {
     let mut time: u64 = 0;
-    if let Some(uptime) = exec("cat", ["/proc/uptime"]) {
+    if let Some(uptime) = exec_async("cat", ["/proc/uptime"]).await {
         if !uptime.is_empty() {
             let s = uptime.split(' ').next().unwrap_or_default();
             time = s.parse::<f64>().ok()? as u64;

@@ -1,10 +1,14 @@
+use tracing::instrument;
+
 #[cfg(windows)]
-pub fn get_battery() -> Option<String> {
-    use crate::share::exec;
-    let s = exec(
+#[instrument]
+pub async fn get_battery() -> Option<String> {
+    use crate::share::exec_async;
+    let s = exec_async(
         "wmic",
         ["Path", "Win32_Battery", "get", "EstimatedChargeRemaining"],
-    )?;
+    )
+    .await?;
 
     if s.lines().count() < 2 {
         return None;
@@ -13,6 +17,7 @@ pub fn get_battery() -> Option<String> {
 }
 
 #[cfg(unix)]
+#[instrument]
 pub fn get_battery() -> Option<String> {
     None
 }

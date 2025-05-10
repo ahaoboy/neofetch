@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use tracing::instrument;
 
-use crate::share::exec;
+use crate::share::exec_async;
 
-pub fn get_cpu() -> Option<String> {
-    let s = exec("cat", ["/proc/cpuinfo"])?;
+#[instrument]
+pub async fn get_cpu() -> Option<String> {
+    let s = exec_async("cat", ["/proc/cpuinfo"]).await?;
     let mut cpuinfo = HashMap::new();
     for line in s.lines() {
         let mut line = line.split(':');

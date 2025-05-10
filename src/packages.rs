@@ -24,20 +24,27 @@ impl Display for Packages {
 
 use std::fmt::Display;
 
-use crate::share::exec;
+use crate::share::exec_async;
+use tracing::instrument;
+#[instrument]
+pub async fn get_packages() -> Option<Packages> {
+    let (snap, dpkg, pacman) = tokio::join! {
+      exec_async("snap", ["list"]),
+      exec_async("dpkg", ["-l"]),
+      exec_async("pacman", ["-Q"]),
+    };
 
-pub fn get_packages() -> Option<Packages> {
-    let snap: Vec<String> = if let Some(s) = exec("snap", ["list"]) {
+    let snap: Vec<String> = if let Some(s) = snap {
         s.lines().skip(1).map(|i| i.to_string()).collect()
     } else {
         Vec::new()
     };
-    let dpkg: Vec<String> = if let Some(s) = exec("dpkg", ["-l"]) {
+    let dpkg: Vec<String> = if let Some(s) = dpkg {
         s.lines().skip(5).map(|i| i.to_string()).collect()
     } else {
         Vec::new()
     };
-    let pacman: Vec<String> = if let Some(s) = exec("pacman", ["-Q"]) {
+    let pacman: Vec<String> = if let Some(s) = pacman {
         s.lines().skip(5).map(|i| i.to_string()).collect()
     } else {
         Vec::new()
