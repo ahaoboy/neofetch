@@ -1,26 +1,55 @@
-use tracing::instrument;
+use std::fmt::Display;
+
+use human_bytes::human_bytes;
+
+#[derive(Debug, Clone)]
+pub struct Gpu {
+    pub name: String,
+    pub version: String,
+    pub ram: u32,
+}
+impl Display for Gpu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!(
+            "{} ({}) @ {}",
+            self.name,
+            human_bytes(self.ram),
+            self.version,
+        ))
+    }
+}
 
 #[cfg(windows)]
-#[instrument]
-pub async fn get_gpu() -> Option<String> {
-    use crate::share::exec_async;
+pub async fn get_gpu() -> Option<Vec<Gpu>> {
+    use crate::share::wmi_query;
+    use serde::Deserialize;
 
-    let s = exec_async("wmic", ["path", "Win32_VideoController", "get", "caption"]).await.or(exec_async(
-        "powershell",
-        [
-            "-c",
-            "Get-CimInstance Win32_VideoController | Select-Object caption",
-        ],
-    ).await)?;
-    s.lines()
-        .last()?
-        .replace("Microsoft ", "")
-        .trim()
-        .to_string()
-        .into()
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename = "Win32_VideoController")]
+    pub struct VideoController {
+        #[serde(rename = "Caption")]
+        pub caption: String,
+        #[serde(rename = "DriverVersion")]
+        pub driver_version: String,
+        #[serde(rename = "AdapterRAM")]
+        pub adapter_ram: u32,
+    }
+
+    let results: Vec<VideoController> = wmi_query().await?;
+
+    Some(
+        results
+            .iter()
+            .map(|i| Gpu {
+                name: i.caption.to_owned(),
+                version: i.driver_version.to_owned(),
+                ram: i.adapter_ram,
+            })
+            .collect(),
+    )
 }
+
 #[cfg(unix)]
-#[instrument]
 pub fn get_gpu() -> Option<String> {
     use regex::Regex;
 

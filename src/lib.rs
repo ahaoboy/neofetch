@@ -12,37 +12,34 @@ pub mod kernel;
 pub mod memory;
 pub mod os;
 pub mod packages;
-pub mod resolution;
 pub mod share;
 pub mod shell;
 pub mod terminal;
 pub mod uptime;
 pub mod user;
 pub mod wm;
+use cpu::Cpu;
 use disk::Disk;
+use gpu::Gpu;
+use hostname::get_hostname;
 use os::OS;
 use packages::Packages;
-use tracing::instrument;
 
-use display::{get_display, Display};
-use icon::Darwin;
+use display::{Display, get_display};
 use uptime::Time;
 use which_shell::ShellVersion;
 
 use crate::battery::get_battery;
 use crate::color::{
-    cursor_down, cursor_forward, cursor_up, BLACK_BG, BLUE_BG, BOLD, BRIGHT_BLACK_BG,
-    BRIGHT_BLUE_BG, BRIGHT_CYAN_BG, BRIGHT_GREEN_BG, BRIGHT_MAGENTA_BG, BRIGHT_RED_BG,
-    BRIGHT_WHITE_BG, BRIGHT_YELLOW_BG, CYAN_BG, GREEN, GREEN_BG, MAGENTA_BG, RED, RED_BG, RESET,
-    WHITE_BG, YELLOW_BG,
+    BLACK_BG, BLUE_BG, BOLD, BRIGHT_BLACK_BG, BRIGHT_BLUE_BG, BRIGHT_CYAN_BG, BRIGHT_GREEN_BG,
+    BRIGHT_MAGENTA_BG, BRIGHT_RED_BG, BRIGHT_WHITE_BG, BRIGHT_YELLOW_BG, CYAN_BG, GREEN, GREEN_BG,
+    MAGENTA_BG, RED, RED_BG, RESET, WHITE_BG, YELLOW_BG, cursor_down, cursor_forward, cursor_up,
 };
 use crate::cpu::get_cpu;
 use crate::de::get_de;
 use crate::disk::get_disk;
 use crate::host::get_host;
 use crate::host::{get_baseband, get_rom};
-use crate::icon::{Android, Linux, Ubuntu};
-use crate::icon::{Windows, Windows_10, Windows_11};
 use crate::kernel::get_kernel;
 use crate::memory::get_memory;
 use crate::packages::get_packages;
@@ -53,7 +50,6 @@ use crate::user::get_user;
 use crate::wm::{get_wm, get_wm_theme};
 use crate::{gpu::get_gpu, os::get_os};
 
-#[instrument]
 pub fn join(left: String, right: String) -> String {
     let mut s = String::new();
     let left_h = left.lines().count();
@@ -90,6 +86,7 @@ pub struct Neofetch {
     pub os: Option<OS>,
     pub user: Option<String>,
     pub host: Option<String>,
+    pub hostname: Option<String>,
     pub rom: Option<String>,
     pub baseband: Option<String>,
     pub kernel: Option<String>,
@@ -102,16 +99,16 @@ pub struct Neofetch {
     pub wm_theme: Option<String>,
     pub terminal: Option<String>,
     pub disk: Option<Vec<Disk>>,
-    pub cpu: Option<String>,
-    pub gpu: Option<String>,
+    pub cpu: Option<Vec<Cpu>>,
+    pub gpu: Option<Vec<Gpu>>,
     pub memory: Option<String>,
-    pub battery: Option<String>,
+    pub battery: Option<u32>,
 }
 
 impl Neofetch {
-    #[instrument]
     pub async fn new() -> Neofetch {
         let (
+            shell,
             os,
             user,
             host,
@@ -120,7 +117,6 @@ impl Neofetch {
             kernel,
             uptime,
             packages,
-            shell,
             display,
             de,
             wm,
@@ -131,7 +127,9 @@ impl Neofetch {
             gpu,
             memory,
             battery,
+            hostname,
         ) = tokio::join!(
+            which_shell(),
             get_os(),
             get_user(),
             get_host(),
@@ -140,7 +138,6 @@ impl Neofetch {
             get_kernel(),
             get_uptime(),
             get_packages(),
-            which_shell(),
             get_display(),
             get_de(),
             get_wm(),
@@ -151,7 +148,9 @@ impl Neofetch {
             get_gpu(),
             get_memory(),
             get_battery(),
+            get_hostname()
         );
+
         Neofetch {
             os,
             user,
@@ -172,6 +171,7 @@ impl Neofetch {
             gpu,
             memory,
             battery,
+            hostname,
         }
     }
 }
@@ -181,7 +181,7 @@ impl std::fmt::Display for Neofetch {
         let mut info: String = String::new();
         let mut icon = String::new();
         let user = self.user.clone().unwrap_or_default();
-        let hostname = self.host.clone().unwrap_or_default();
+        let hostname = self.hostname.clone().unwrap_or_default();
 
         info.push_str(&format!(
             "{RESET}{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
@@ -189,22 +189,8 @@ impl std::fmt::Display for Neofetch {
         info.push_str("-------\n");
         if let Some(os) = &self.os {
             let s = os.to_string();
+            icon = os.distro.icon();
             info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{s}\n"));
-            if s.starts_with("Windows 11") {
-                icon = Windows_11()
-            } else if s.starts_with("Windows 10") {
-                icon = Windows_10()
-            } else if s.starts_with("Windows") {
-                icon = Windows()
-            } else if s.starts_with("Android") {
-                icon = Android()
-            } else if s.starts_with("Ubuntu") {
-                icon = Ubuntu()
-            } else if s.starts_with("Linux") {
-                icon = Linux()
-            } else if s.starts_with("Darwin") {
-                icon = Darwin()
-            }
         }
 
         if let Some(host) = &self.host {
@@ -254,10 +240,6 @@ impl std::fmt::Display for Neofetch {
             }
         }
 
-        // if let Some(resolution) = get_resolution() {
-        //     info.push_str(&format!("{GREEN}{BOLD}Resolution: {RESET}{resolution}\n"));
-        // }
-
         if let Some(de) = &self.de {
             info.push_str(&format!("{GREEN}{BOLD}DE: {RESET}{de}\n"));
         }
@@ -288,11 +270,18 @@ impl std::fmt::Display for Neofetch {
         }
 
         if let Some(cpu) = &self.cpu {
-            info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
+            for i in cpu {
+                info.push_str(&format!(
+                    "{GREEN}{BOLD}CPU: {RESET}{}\n",
+                    i
+                ));
+            }
         }
 
         if let Some(gpu) = &self.gpu {
-            info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{gpu}\n"));
+            for i in gpu {
+                info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{}\n", i));
+            }
         }
 
         if let Some(memory) = &self.memory {
@@ -331,7 +320,6 @@ impl std::fmt::Display for Neofetch {
     }
 }
 
-#[instrument]
 pub async fn neofetch() -> String {
     Neofetch::new().await.to_string()
 }

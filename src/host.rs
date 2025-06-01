@@ -1,17 +1,17 @@
-use tracing::instrument;
-use crate::share::exec_async;
-
 #[cfg(windows)]
-#[instrument]
 pub async fn get_host() -> Option<String> {
-    let s = exec_async("wmic", ["computersystem", "get", "manufacturer"]).await.or(exec_async(
-        "powershell",
-        [
-            "-c",
-            "Get-CimInstance Win32_computersystem | Select-Object manufacturer",
-        ],
-    ).await)?;
-    s.lines().last()?.trim().to_string().into()
+    use crate::share::wmi_query;
+    use serde::Deserialize;
+
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename = "Win32_computersystem")]
+    struct Computersystem {
+        #[serde(rename = "Manufacturer")]
+        manufacturer: String,
+    }
+
+    let results: Vec<Computersystem> = wmi_query().await?;
+    results.first().map(|i| i.manufacturer.clone())
 }
 
 #[cfg(windows)]
@@ -25,19 +25,19 @@ pub async fn get_baseband() -> Option<String> {
 }
 
 #[cfg(unix)]
-#[instrument]
+
 pub fn get_rom() -> Option<String> {
     exec("getprop", ["ro.build.display.id"])
 }
 
 #[cfg(unix)]
-#[instrument]
+
 pub fn get_baseband() -> Option<String> {
     exec("getprop", ["ro.baseband"])
 }
 
 #[cfg(unix)]
-#[instrument]
+
 pub fn get_host() -> Option<String> {
     if let (Some(name), Some(version)) = (
         exec("cat", ["/sys/devices/virtual/dmi/id/board_name"]),

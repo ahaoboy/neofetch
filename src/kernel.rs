@@ -1,30 +1,18 @@
-use tracing::instrument;
-
 #[cfg(windows)]
-#[instrument]
 pub async fn get_kernel() -> Option<String> {
-    use crate::share::exec_async;
-
-    let s = exec_async("wmic", ["os", "get", "Version"])
-        .await
-        .or(exec_async(
-            "powershell",
-            [
-                "-c",
-                "Get-CimInstance Win32_OperatingSystem | Select-Object Version",
-            ],
-        )
-        .await)?;
-    s.trim()
-        .lines()
-        .last()?
-        .replace("Version", "")
-        .trim()
-        .to_string()
-        .into()
+    use crate::share::wmi_query;
+    use serde::Deserialize;
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename = "Win32_OperatingSystem")]
+    struct OperatingSystem {
+        #[serde(rename = "Version")]
+        version: String,
+    }
+    let results: Vec<OperatingSystem> = wmi_query().await?;
+    results.first().map(|i| i.version.clone())
 }
 #[cfg(unix)]
-#[instrument]
+
 pub fn get_kernel() -> Option<String> {
     let s = exec("uname", ["-r"])?;
     s.trim().to_string().into()

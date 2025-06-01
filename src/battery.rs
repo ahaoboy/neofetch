@@ -1,23 +1,19 @@
-use tracing::instrument;
-
 #[cfg(windows)]
-#[instrument]
-pub async fn get_battery() -> Option<String> {
-    use crate::share::exec_async;
-    let s = exec_async(
-        "wmic",
-        ["Path", "Win32_Battery", "get", "EstimatedChargeRemaining"],
-    )
-    .await?;
-
-    if s.lines().count() < 2 {
-        return None;
+pub async fn get_battery() -> Option<u32> {
+    use crate::share::wmi_query;
+    use serde::Deserialize;
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename = "Win32_Battery")]
+    struct Battery {
+        #[serde(rename = "EstimatedChargeRemaining")]
+        estimated_charge_remaining: u32,
     }
-    Some(s.lines().last()?.to_string())
+
+    let results: Vec<Battery> = wmi_query().await?;
+    results.first().map(|i| i.estimated_charge_remaining)
 }
 
 #[cfg(unix)]
-#[instrument]
-pub fn get_battery() -> Option<String> {
+pub async fn get_battery() -> Option<u32> {
     None
 }

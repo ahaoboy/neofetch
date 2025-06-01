@@ -35,10 +35,8 @@ impl std::fmt::Display for Display {
         f.write_str(&v.join(" "))
     }
 }
-use tracing::instrument;
 
 #[cfg(not(target_os = "android"))]
-#[instrument]
 pub async fn get_display() -> Option<Vec<Display>> {
     use display_info::DisplayInfo;
 
@@ -68,7 +66,6 @@ pub async fn get_display() -> Option<Vec<Display>> {
 }
 
 #[cfg(target_os = "android")]
-#[instrument]
 pub fn get_display() -> Option<Vec<Display>> {
     None
 }
