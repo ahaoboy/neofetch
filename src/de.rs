@@ -1,7 +1,7 @@
 use crate::os::get_os;
 
-pub fn get_de() -> Option<String> {
-    if let Some(os) = get_os() {
+pub async fn get_de() -> Option<String> {
+    if let Some(os) = get_os().await {
         let s = os.to_string();
         if s.contains("Windows 11") {
             return String::from("Fluent").into();

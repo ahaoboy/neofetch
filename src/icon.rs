@@ -1,11 +1,259 @@
-#![allow(non_snake_case)]
-#![allow(unused_variables)]
-
 use crate::color::COLORS;
+use crate::os::Distro;
 
-pub fn AIX() -> String {
+impl Distro {
+    pub fn icon(&self) -> String {
+        match self {
+            Distro::Aix => aix(),
+            Distro::AlmaLinux => alma_linux(),
+            Distro::AlpineSmall => alpine_small(),
+            Distro::Alpine => alpine(),
+            Distro::Alter => alter(),
+            Distro::Amazon => amazon(),
+            Distro::Anarchy => anarchy(),
+            Distro::AndroidSmall => android_small(),
+            Distro::Android => android(),
+            Distro::InstantOs => instant_os(),
+            Distro::Antergos => antergos(),
+            Distro::AntiX => anti_x(),
+            Distro::AoscOs => aosc_os(),
+            Distro::Apricity => apricity(),
+            Distro::Archcraft => archcraft(),
+            Distro::ArcolinuxSmall => arcolinux_small(),
+            Distro::ArcoLinux => arco_linux(),
+            Distro::ArchSmall => arch_small(),
+            Distro::ArchOld => arch_old(),
+            Distro::ArchBox => arch_box(),
+            Distro::ArcHlabs => arc_hlabs(),
+            Distro::ArchStrike => arch_strike(),
+            Distro::XFerience => x_ferience(),
+            Distro::ArchMerge => arch_merge(),
+            Distro::Arch => arch(),
+            Distro::ArtixSmall => artix_small(),
+            Distro::Artix => artix(),
+            Distro::Arya => arya(),
+            Distro::Bedrock => bedrock(),
+            Distro::Bitrig => bitrig(),
+            Distro::BlackArch => black_arch(),
+            Distro::Blag => blag(),
+            Distro::BlankOn => blank_on(),
+            Distro::BlueLight => blue_light(),
+            Distro::Bonsai => bonsai(),
+            Distro::BunsenLabs => bunsen_labs(),
+            Distro::Calculate => calculate(),
+            Distro::Carbs => carbs(),
+            Distro::CblMariner => cbl_mariner(),
+            Distro::CelOs => cel_os(),
+            Distro::CentosSmall => centos_small(),
+            Distro::CentOs => cent_os(),
+            Distro::Chakra => chakra(),
+            Distro::ChaletOs => chalet_os(),
+            Distro::Chapeau => chapeau(),
+            Distro::Chrom => chrom(),
+            Distro::CleanjaroSmall => cleanjaro_small(),
+            Distro::Cleanjaro => cleanjaro(),
+            Distro::ClearOs => clear_os(),
+            Distro::ClearLinuxOs => clear_linux_os(),
+            Distro::Clover => clover(),
+            Distro::Condres => condres(),
+            Distro::ContainerLinuxByCoreOs => container_linux_by_core_os(),
+            Distro::CruxSmall => crux_small(),
+            Distro::Crux => crux(),
+            Distro::CrystalLinux => crystal_linux(),
+            Distro::Cucumber => cucumber(),
+            Distro::Dahlia => dahlia(),
+            Distro::DebianSmall => debian_small(),
+            Distro::Debian => debian(),
+            Distro::Deepin => deepin(),
+            Distro::DesaOs => desa_os(),
+            Distro::Devuan => devuan(),
+            Distro::DracOs => drac_os(),
+            Distro::Itc => itc(),
+            Distro::DragonflyOld => dragonfly_old(),
+            Distro::DragonflySmall => dragonfly_small(),
+            Distro::DragonFly => dragon_fly(),
+            Distro::Drauger => drauger(),
+            Distro::ElementarySmall => elementary_small(),
+            Distro::Elementary => elementary(),
+            Distro::EndeavourOs => endeavour_os(),
+            Distro::Endless => endless(),
+            Distro::EuroLinux => euro_linux(),
+            Distro::Exherbo => exherbo(),
+            Distro::FedoraSmall => fedora_small(),
+            Distro::FedoraOld => fedora_old(),
+            Distro::Fedora => fedora(),
+            Distro::Feren => feren(),
+            Distro::FreebsdSmall => freebsd_small(),
+            Distro::FreeMiNt => free_mi_nt(),
+            Distro::Frugalware => frugalware(),
+            Distro::Funtoo => funtoo(),
+            Distro::GalliumOs => gallium_os(),
+            Distro::Garuda => garuda(),
+            Distro::GentooSmall => gentoo_small(),
+            Distro::Gentoo => gentoo(),
+            Distro::Pentoo => pentoo(),
+            Distro::Glaucus => glaucus(),
+            Distro::GNewSense => g_new_sense(),
+            Distro::Gnome => gnome(),
+            Distro::Gnu => gnu(),
+            Distro::GoboLinux => gobo_linux(),
+            Distro::Grombyang => grombyang(),
+            Distro::GuixSmall => guix_small(),
+            Distro::Guix => guix(),
+            Distro::HaikuSmall => haiku_small(),
+            Distro::Haiku => haiku(),
+            Distro::Huayra => huayra(),
+            Distro::HydroOs => hydro_os(),
+            Distro::HyperbolaSmall => hyperbola_small(),
+            Distro::Hyperbola => hyperbola(),
+            Distro::Iglunix => iglunix(),
+            Distro::Januslinux => januslinux(),
+            Distro::Kaisen => kaisen(),
+            Distro::Kali => kali(),
+            Distro::KaOs => ka_os(),
+            Distro::Kde => kde(),
+            Distro::Kibojoe => kibojoe(),
+            Distro::Kogaion => kogaion(),
+            Distro::Korora => korora(),
+            Distro::KsLinux => ks_linux(),
+            Distro::Kubuntu => kubuntu(),
+            Distro::Lede => lede(),
+            Distro::LaxerOs => laxer_os(),
+            Distro::LibreElec => libre_elec(),
+            Distro::Linux => linux(),
+            Distro::LinuxliteSmall => linuxlite_small(),
+            Distro::LinuxLite => linux_lite(),
+            Distro::Lmde => lmde(),
+            Distro::Lubuntu => lubuntu(),
+            Distro::Lunar => lunar(),
+            Distro::Mac => mac(),
+            Distro::MageiaSmall => mageia_small(),
+            Distro::Mageia => mageia(),
+            Distro::MagpieOs => magpie_os(),
+            Distro::Mandriva => mandriva(),
+            Distro::ManjaroSmall => manjaro_small(),
+            Distro::Manjaro => manjaro(),
+            Distro::Maui => maui(),
+            Distro::Mer => mer(),
+            Distro::Minix => minix(),
+            Distro::LinuxmintSmall => linuxmint_small(),
+            Distro::LinuxMintOld => linux_mint_old(),
+            Distro::LinuxMint => linux_mint(),
+            Distro::LiveRaizo => live_raizo(),
+            Distro::MxSmall => mx_small(),
+            Distro::Mx => mx(),
+            Distro::Namib => namib(),
+            Distro::Neptune => neptune(),
+            Distro::NetbsdSmall => netbsd_small(),
+            Distro::NetBsd => net_bsd(),
+            Distro::Netrunner => netrunner(),
+            Distro::Nitrux => nitrux(),
+            Distro::NixosSmall => nixos_small(),
+            Distro::NixosOld => nixos_old(),
+            Distro::NixOs => nix_os(),
+            Distro::Nurunner => nurunner(),
+            Distro::NuTyX => nu_ty_x(),
+            Distro::ObRevenge => ob_revenge(),
+            Distro::OpenbsdSmall => openbsd_small(),
+            Distro::OpenBsd => open_bsd(),
+            Distro::OpenEuler => open_euler(),
+            Distro::OpenIndiana => open_indiana(),
+            Distro::Openmamba => openmamba(),
+            Distro::OpenMandriva => open_mandriva(),
+            Distro::OpenStage => open_stage(),
+            Distro::OpenWrt => open_wrt(),
+            Distro::OpenSourceMediaCenter => open_source_media_center(),
+            Distro::Oracle => oracle(),
+            Distro::OsElbrus => os_elbrus(),
+            Distro::PacBsd => pac_bsd(),
+            Distro::ParabolaSmall => parabola_small(),
+            Distro::Parabola => parabola(),
+            Distro::Pardus => pardus(),
+            Distro::Parrot => parrot(),
+            Distro::Parsix => parsix(),
+            Distro::Pcbsd => pcbsd(),
+            Distro::PcLinuxOs => pc_linux_os(),
+            Distro::Pengwin => pengwin(),
+            Distro::Peppermint => peppermint(),
+            Distro::PoposSmall => popos_small(),
+            Distro::PopOs => pop_os(),
+            Distro::Porteus => porteus(),
+            Distro::PostmarketosSmall => postmarketos_small(),
+            Distro::PostMarketOs => post_market_os(),
+            Distro::PuffOs => puff_os(),
+            Distro::Puppy => puppy(),
+            Distro::PureosSmall => pureos_small(),
+            Distro::PureOs => pure_os(),
+            Distro::Qubes => qubes(),
+            Distro::Qubyt => qubyt(),
+            Distro::Quibian => quibian(),
+            Distro::Radix => radix(),
+            Distro::RaspbianSmall => raspbian_small(),
+            Distro::Raspbian => raspbian(),
+            Distro::RebornOs => reborn_os(),
+            Distro::RedStar => red_star(),
+            Distro::Redcore => redcore(),
+            Distro::RedhatOld => redhat_old(),
+            Distro::Redhat => redhat(),
+            Distro::RefractedDevuan => refracted_devuan(),
+            Distro::Regata => regata(),
+            Distro::Regolith => regolith(),
+            Distro::RockySmall => rocky_small(),
+            Distro::Rosa => rosa(),
+            Distro::Sabotage => sabotage(),
+            Distro::Sabayon => sabayon(),
+            Distro::Sailfish => sailfish(),
+            Distro::SalentOs => salent_os(),
+            Distro::Scientific => scientific(),
+            Distro::Septor => septor(),
+            Distro::Serene => serene(),
+            Distro::SharkLinux => shark_linux(),
+            Distro::SlackwareSmall => slackware_small(),
+            Distro::Slackware => slackware(),
+            Distro::SliTaz => sli_taz(),
+            Distro::SmartOs => smart_os(),
+            Distro::Solus => solus(),
+            Distro::SourceMage => source_mage(),
+            Distro::Sparky => sparky(),
+            Distro::Star => star(),
+            Distro::SteamOs => steam_os(),
+            Distro::SunosSmall => sunos_small(),
+            Distro::OpenSuseLeap => open_suse_leap(),
+            Distro::T2 => t2(),
+            Distro::OpenSuseTumbleweed => open_suse_tumbleweed(),
+            Distro::OpensuseSmall => opensuse_small(),
+            Distro::OpenSuse => open_suse(),
+            Distro::SwagArch => swag_arch(),
+            Distro::Tails => tails(),
+            Distro::Trisquel => trisquel(),
+            Distro::UbuntuCinnamon => ubuntu_cinnamon(),
+            Distro::UbuntuBudgie => ubuntu_budgie(),
+            Distro::UbuntuGnome => ubuntu_gnome(),
+            Distro::UbuntuMate => ubuntu_mate(),
+            Distro::UbuntuOld => ubuntu_old(),
+            Distro::UbuntuStudio => ubuntu_studio(),
+            Distro::UbuntuSmall => ubuntu_small(),
+            Distro::Ubuntu => ubuntu(),
+            Distro::Univention => univention(),
+            Distro::Venom => venom(),
+            Distro::VoidSmall => void_small(),
+            Distro::LangitKetujuh => langit_ketujuh(),
+            Distro::Semc => semc(),
+            Distro::Obarun => obarun(),
+            Distro::Windows11 => windows11(),
+            Distro::Windows10 => windows10(),
+            Distro::Windows => windows(),
+            Distro::Xubuntu => xubuntu(),
+            Distro::Zorin => zorin(),
+            Distro::Darwin => darwin(),
+            Distro::ProfelisSambaBox => profelis_samba_box(),
+            Distro::Unknown => String::new(),
+        }
+    }
+}
+
+pub fn aix() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}           `:+ssssossossss+-`
         .oys///oyhddddhyo///sy+.
@@ -51,7 +299,7 @@ h//NNNNh  ossss` +h  md- .hm/ `sNNNNN:+y
 //     )
 // }
 
-pub fn AlmaLinux() -> String {
+pub fn alma_linux() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[3];
     let c3 = COLORS[4];
@@ -94,11 +342,8 @@ pub fn alpine_small() -> String {
     )
 }
 
-pub fn Alpine() -> String {
+pub fn alpine() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[5];
-    let c3 = COLORS[7];
-    let c4 = COLORS[6];
     format!(
         r##########"{c1}       .hddddddddddddddddddddddh.
       :dddddddddddddddddddddddddd:
@@ -123,9 +368,8 @@ hdddyo+ohddyosdddddddddho+oydddy++ohdddh
     )
 }
 
-pub fn Alter() -> String {
+pub fn alter() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
     format!(
         r##########"{c1}                      %,
                     ^WWWw
@@ -150,9 +394,8 @@ pub fn Alter() -> String {
     )
 }
 
-pub fn Amazon() -> String {
+pub fn amazon() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}             `-/oydNNdyo:.`
       `.:+shmMMMMMMMMMMMMMMmhs+:.`
@@ -176,7 +419,7 @@ dMMMMMMMMMMMMMMMMh    yMMMMMMMMMMMMMMMMd
     )
 }
 
-pub fn Anarchy() -> String {
+pub fn anarchy() -> String {
     let c1 = COLORS[7];
     let c2 = COLORS[4];
     format!(
@@ -213,7 +456,6 @@ pub fn Anarchy() -> String {
 
 pub fn android_small() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}  ;,           ,;
    ';,.-----.,;'
@@ -224,7 +466,7 @@ pub fn android_small() -> String {
     )
 }
 
-pub fn Android() -> String {
+pub fn android() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[7];
     format!(
@@ -249,9 +491,8 @@ pub fn Android() -> String {
     )
 }
 
-pub fn instantOS() -> String {
+pub fn instant_os() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[6];
     format!(
         r##########"{c1}
      'cx0XWWMMWNKOd:'.
@@ -277,7 +518,7 @@ kWMMMMNd.        ,kWMMMMMMK,
     )
 }
 
-pub fn Antergos() -> String {
+pub fn antergos() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[6];
     format!(
@@ -303,10 +544,8 @@ dmmmdddddddhhhyso{c1}++++++{c2}shhhhhddddddmmmmh
     )
 }
 
-pub fn antiX() -> String {
+pub fn anti_x() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}
                     \
@@ -324,10 +563,8 @@ pub fn antiX() -> String {
     )
 }
 
-pub fn AOSC_OS() -> String {
-    let c1 = COLORS[4];
+pub fn aosc_os() -> String {
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}             .:+syhhhhys+:.
          .ohNMMMMMMMMMMMMMMNho.
@@ -352,10 +589,8 @@ pub fn AOSC_OS() -> String {
     )
 }
 
-pub fn Apricity() -> String {
-    let c1 = COLORS[4];
+pub fn apricity() -> String {
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}                                    ./o-
           ``...``              `:. -/:
@@ -378,11 +613,8 @@ dhhyys+/-`"##########
     )
 }
 
-pub fn Archcraft() -> String {
+pub fn archcraft() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
-    let c3 = COLORS[7];
-    let c4 = COLORS[1];
     format!(
         r##########"{c1}                   -m:
                   :NMM+      .+
@@ -423,7 +655,7 @@ ooooo          {c1}<oooo>{c2}"##########
     )
 }
 
-pub fn ArcoLinux() -> String {
+pub fn arco_linux() -> String {
     let c1 = COLORS[7];
     let c2 = COLORS[4];
     format!(
@@ -453,7 +685,6 @@ ooooooooo.                     {c1}-ooooooooo{c2}"##########
 pub fn arch_small() -> String {
     let c1 = COLORS[6];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}      /\\
      /  \\
@@ -468,7 +699,6 @@ pub fn arch_small() -> String {
 pub fn arch_old() -> String {
     let c1 = COLORS[6];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}             __
          _=(SDGJT=_
@@ -489,10 +719,8 @@ pub fn arch_old() -> String {
     )
 }
 
-pub fn ArchBox() -> String {
+pub fn arch_box() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}              ...:+oh/:::..
          ..-/oshhhhhh`   `::::-.
@@ -516,10 +744,8 @@ pub fn ArchBox() -> String {
     )
 }
 
-pub fn ARCHlabs() -> String {
+pub fn arc_hlabs() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
-    let c3 = COLORS[7];
     let c4 = COLORS[1];
     format!(
         r##########"{c1}                     'c'
@@ -546,7 +772,7 @@ pub fn ARCHlabs() -> String {
     )
 }
 
-pub fn ArchStrike() -> String {
+pub fn arch_strike() -> String {
     let c1 = COLORS[8];
     let c2 = COLORS[6];
     format!(
@@ -570,11 +796,8 @@ pub fn ArchStrike() -> String {
     )
 }
 
-pub fn XFerience() -> String {
+pub fn x_ferience() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
-    let c3 = COLORS[7];
-    let c4 = COLORS[1];
     format!(
         r##########"{c1}           ``--:::::::-.`
         .-/+++ooooooooo+++:-`
@@ -598,11 +821,8 @@ pub fn XFerience() -> String {
     )
 }
 
-pub fn ArchMerge() -> String {
+pub fn arch_merge() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
-    let c3 = COLORS[7];
-    let c4 = COLORS[1];
     format!(
         r##########"{c1}                    y:
                   sMN-
@@ -627,11 +847,9 @@ pub fn ArchMerge() -> String {
     )
 }
 
-pub fn Arch() -> String {
+pub fn arch() -> String {
     let c1 = COLORS[6];
     let c2 = COLORS[6];
-    let c3 = COLORS[7];
-    let c4 = COLORS[1];
     format!(
         r##########"{c1}                   -`
                   .o+`
@@ -657,9 +875,6 @@ pub fn Arch() -> String {
 
 pub fn artix_small() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
-    let c3 = COLORS[7];
-    let c4 = COLORS[1];
     format!(
         r##########"{c1}      /\\
      /  \\
@@ -671,11 +886,8 @@ pub fn artix_small() -> String {
     )
 }
 
-pub fn Artix() -> String {
+pub fn artix() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
-    let c3 = COLORS[7];
-    let c4 = COLORS[1];
     format!(
         r##########"{c1}                   '
                   'o'
@@ -700,7 +912,7 @@ pub fn Artix() -> String {
     )
 }
 
-pub fn Arya() -> String {
+pub fn arya() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[1];
     format!(
@@ -748,7 +960,7 @@ pub fn Arya() -> String {
 //     )
 // }
 
-pub fn Bedrock() -> String {
+pub fn bedrock() -> String {
     let c1 = COLORS[8];
     let c2 = COLORS[7];
     format!(
@@ -772,9 +984,8 @@ pub fn Bedrock() -> String {
     )
 }
 
-pub fn Bitrig() -> String {
+pub fn bitrig() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}   `hMMMMN+
    -MMo-dMd`
@@ -796,11 +1007,10 @@ sm/         /ms"##########
     )
 }
 
-pub fn BlackArch() -> String {
+pub fn black_arch() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[1];
     let c3 = COLORS[0];
-    let c4 = COLORS[1];
     format!(
         r##########"{c3}                   00
                    11
@@ -826,9 +1036,8 @@ pub fn BlackArch() -> String {
     )
 }
 
-pub fn BLAG() -> String {
+pub fn blag() -> String {
     let c1 = COLORS[5];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}             d
             ,MK:
@@ -850,10 +1059,9 @@ pub fn BLAG() -> String {
     )
 }
 
-pub fn BlankOn() -> String {
+pub fn blank_on() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c2}        `./ohdNMMMMNmho+.` {c1}       .+oo:`
 {c2}      -smMMMMMMMMMMMMMMMMmy-`    {c1}`yyyyy+
@@ -875,7 +1083,7 @@ pub fn BlankOn() -> String {
     )
 }
 
-pub fn BlueLight() -> String {
+pub fn blue_light() -> String {
     let c1 = COLORS[7];
     let c2 = COLORS[4];
     format!(
@@ -954,9 +1162,8 @@ pub fn bonsai() -> String {
 //   )
 // }
 
-pub fn BunsenLabs() -> String {
+pub fn bunsen_labs() -> String {
     let c1 = COLORS[7];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}        `++
       -yMMs
@@ -981,7 +1188,7 @@ pub fn BunsenLabs() -> String {
     )
 }
 
-pub fn Calculate() -> String {
+pub fn calculate() -> String {
     let c1 = COLORS[7];
     let c2 = COLORS[3];
     format!(
@@ -1008,13 +1215,8 @@ pub fn Calculate() -> String {
     )
 }
 
-pub fn Carbs() -> String {
-    let c1 = COLORS[4];
+pub fn carbs() -> String {
     let c2 = COLORS[5];
-    let c3 = COLORS[4];
-    let c4 = COLORS[4];
-    let c5 = COLORS[4];
-    let c6 = COLORS[4];
     format!(
         r##########"{c2}             ..........
           ..,;:ccccccc:;'..
@@ -1037,7 +1239,7 @@ pub fn Carbs() -> String {
     )
 }
 
-pub fn CBL_Mariner() -> String {
+pub fn cbl_mariner() -> String {
     let c1 = COLORS[6];
     format!(
         r##########"{c1}                    .
@@ -1061,9 +1263,7 @@ pub fn CBL_Mariner() -> String {
     )
 }
 
-pub fn CelOS() -> String {
-    let c1 = COLORS[4];
-    let c2 = COLORS[6];
+pub fn cel_os() -> String {
     let c3 = COLORS[0];
     let c4 = COLORS[5];
     format!(
@@ -1094,7 +1294,6 @@ pub fn centos_small() -> String {
     let c2 = COLORS[2];
     let c3 = COLORS[4];
     let c4 = COLORS[5];
-    let c5 = COLORS[7];
     format!(
         r##########"{c2} ____{c1}^{c4}____
 {c2} |\\  {c1}|{c4}  /|
@@ -1106,12 +1305,11 @@ pub fn centos_small() -> String {
     )
 }
 
-pub fn CentOS() -> String {
+pub fn cent_os() -> String {
     let c1 = COLORS[3];
     let c2 = COLORS[2];
     let c3 = COLORS[4];
     let c4 = COLORS[5];
-    let c5 = COLORS[7];
     format!(
         r##########"{c1}                 ..
                .PLTJ.
@@ -1135,11 +1333,8 @@ pub fn CentOS() -> String {
     )
 }
 
-pub fn Chakra() -> String {
+pub fn chakra() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[5];
-    let c3 = COLORS[7];
-    let c4 = COLORS[6];
     format!(
         r##########"{c1}     _ _ _        "kkkkkkkk.
    ,kkkkkkkk.,    'kkkkkkkkk,
@@ -1162,10 +1357,8 @@ pub fn Chakra() -> String {
     )
 }
 
-pub fn ChaletOS() -> String {
+pub fn chalet_os() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}             `.//+osso+/:``
          `/sdNNmhyssssydmNNdo:`
@@ -1190,7 +1383,7 @@ pub fn ChaletOS() -> String {
     )
 }
 
-pub fn Chapeau() -> String {
+pub fn chapeau() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[7];
     format!(
@@ -1215,7 +1408,7 @@ pub fn Chapeau() -> String {
     )
 }
 
-pub fn Chrom() -> String {
+pub fn chrom() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[1];
     let c3 = COLORS[3];
@@ -1245,7 +1438,6 @@ pub fn Chrom() -> String {
 
 pub fn cleanjaro_small() -> String {
     let c1 = COLORS[7];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}█████ ██████████
 █████ ██████████
@@ -1257,9 +1449,8 @@ pub fn cleanjaro_small() -> String {
     )
 }
 
-pub fn Cleanjaro() -> String {
+pub fn cleanjaro() -> String {
     let c1 = COLORS[7];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}███████▌ ████████████████
 ███████▌ ████████████████
@@ -1276,7 +1467,7 @@ pub fn Cleanjaro() -> String {
     )
 }
 
-pub fn ClearOS() -> String {
+pub fn clear_os() -> String {
     let c1 = COLORS[2];
     format!(
         r##########"{c1}             `.--::::::--.`
@@ -1302,7 +1493,7 @@ pub fn ClearOS() -> String {
     )
 }
 
-pub fn Clear_Linux_OS() -> String {
+pub fn clear_linux_os() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[3];
     let c3 = COLORS[7];
@@ -1331,7 +1522,7 @@ pub fn Clear_Linux_OS() -> String {
     )
 }
 
-pub fn Clover() -> String {
+pub fn clover() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[6];
     format!(
@@ -1358,7 +1549,7 @@ oNMMMMMMMMMMMNs`  `sy`  `oNMMMMMMMMMMMNo
     )
 }
 
-pub fn Condres() -> String {
+pub fn condres() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[3];
     let c3 = COLORS[6];
@@ -1383,7 +1574,7 @@ pub fn Condres() -> String {
     )
 }
 
-pub fn Container_Linux_by_CoreOS() -> String {
+pub fn container_linux_by_core_os() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
     let c3 = COLORS[1];
@@ -1415,7 +1606,6 @@ pub fn crux_small() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[5];
     let c3 = COLORS[7];
-    let c4 = COLORS[6];
     format!(
         r##########"{c1}    ___
    ({c3}.· {c1}|
@@ -1427,11 +1617,10 @@ pub fn crux_small() -> String {
     )
 }
 
-pub fn CRUX() -> String {
+pub fn crux() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[5];
     let c3 = COLORS[7];
-    let c4 = COLORS[6];
     format!(
         r##########"{c1}         odddd
       oddxkkkxxdoo
@@ -1454,9 +1643,8 @@ xx{c2}dx{c1}kxxOKN{c3}WMMWN{c1}0xdoxo::c
     )
 }
 
-pub fn Crystal_Linux() -> String {
+pub fn crystal_linux() -> String {
     let c1 = COLORS[13];
-    let c2 = COLORS[5];
     format!(
         r##########"{c1}                        mysssym
 {c1}                      mysssym
@@ -1481,7 +1669,7 @@ pub fn Crystal_Linux() -> String {
     )
 }
 
-pub fn Cucumber() -> String {
+pub fn cucumber() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[3];
     format!(
@@ -1510,8 +1698,6 @@ o/{c2}--...::-:/::/:-......-::::::-/-...-{c1}:/o
 
 pub fn dahlia() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}
                   .#.
@@ -1536,8 +1722,6 @@ pub fn dahlia() -> String {
 
 pub fn debian_small() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}  _____
  /  __ \\
@@ -1548,10 +1732,9 @@ pub fn debian_small() -> String {
     )
 }
 
-pub fn Debian() -> String {
+pub fn debian() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c2}       _,met$$$$$gg.
     ,g$$$$$$$$$$$$$$$P.
@@ -1573,9 +1756,8 @@ pub fn Debian() -> String {
     )
 }
 
-pub fn Deepin() -> String {
+pub fn deepin() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}             ............
          .';;;;;.       .,;,.
@@ -1598,9 +1780,8 @@ pub fn Deepin() -> String {
     )
 }
 
-pub fn DesaOS() -> String {
+pub fn desa_os() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}███████████████████████
 ███████████████████████
@@ -1621,9 +1802,8 @@ pub fn DesaOS() -> String {
     )
 }
 
-pub fn Devuan() -> String {
+pub fn devuan() -> String {
     let c1 = COLORS[5];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}   ..,,;;;::;,..
            `':ddd;:,.
@@ -1643,10 +1823,8 @@ pub fn Devuan() -> String {
     )
 }
 
-pub fn DracOS() -> String {
+pub fn drac_os() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}       `-:/-
           -os:
@@ -1694,7 +1872,7 @@ pub fn DracOS() -> String {
 //   )
 // }
 
-pub fn Itc() -> String {
+pub fn itc() -> String {
     let c1 = COLORS[1];
     format!(
         r##########"{c1}....................-==============+...
@@ -1739,7 +1917,6 @@ pub fn dragonfly_old() -> String {
 pub fn dragonfly_small() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c2}   ,{c1}_{c2},
 ('-_{c1}|{c2}_-')
@@ -1751,7 +1928,7 @@ pub fn dragonfly_small() -> String {
     )
 }
 
-pub fn DragonFly() -> String {
+pub fn dragon_fly() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
     let c3 = COLORS[3];
@@ -1774,9 +1951,8 @@ pub fn DragonFly() -> String {
     )
 }
 
-pub fn Drauger() -> String {
+pub fn drauger() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}                  -``-
                 `:+``+:`
@@ -1798,9 +1974,7 @@ pub fn Drauger() -> String {
 }
 
 pub fn elementary_small() -> String {
-    let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}  _______
  / ____  \\
@@ -1811,10 +1985,8 @@ pub fn elementary_small() -> String {
     )
 }
 
-pub fn Elementary() -> String {
-    let c1 = COLORS[4];
+pub fn elementary() -> String {
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}         eeeeeeeeeeeeeeeee
       eeeeeeeeeeeeeeeeeeeeeee
@@ -1836,7 +2008,7 @@ eee    eeeeeeeeee     eeeeee    eee
     )
 }
 
-pub fn EndeavourOS() -> String {
+pub fn endeavour_os() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[5];
     let c3 = COLORS[4];
@@ -1859,9 +2031,8 @@ pub fn EndeavourOS() -> String {
     )
 }
 
-pub fn Endless() -> String {
+pub fn endless() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}           `:+yhmNMMMMNmhy+:`
         -odMMNhso//////oshNMMdo-
@@ -1886,7 +2057,7 @@ dMm     `/++/-``/yNNh+/sdNMNddMm-    mMd
     )
 }
 
-pub fn EuroLinux() -> String {
+pub fn euro_linux() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
     format!(
@@ -1911,7 +2082,7 @@ wWW{c2}N{c1}WWWWw
     )
 }
 
-pub fn Exherbo() -> String {
+pub fn exherbo() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
     let c3 = COLORS[1];
@@ -1956,10 +2127,9 @@ pub fn fedora_small() -> String {
     )
 }
 
-pub fn Fedora_old() -> String {
+pub fn fedora_old() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}          /:-------------:\\
        :-------------------::
@@ -1981,7 +2151,7 @@ pub fn Fedora_old() -> String {
     )
 }
 
-pub fn Fedora() -> String {
+pub fn fedora() -> String {
     let c1 = COLORS[12];
     let c2 = COLORS[7];
     format!(
@@ -2007,10 +2177,8 @@ cccccccc;{c2}.:odl:.{c1};cccccccccccccc:,.
     )
 }
 
-pub fn Feren() -> String {
+pub fn feren() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1} `----------`
  :+ooooooooo+.
@@ -2033,8 +2201,6 @@ pub fn Feren() -> String {
 
 pub fn freebsd_small() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}/\\,-'''''-,/\\
 \\_)       (_/
@@ -2045,7 +2211,7 @@ pub fn freebsd_small() -> String {
     )
 }
 
-pub fn FreeMiNT() -> String {
+pub fn free_mi_nt() -> String {
     let c1 = COLORS[7];
     format!(
         r##########"{c1}          ##
@@ -2066,10 +2232,9 @@ pub fn FreeMiNT() -> String {
     )
 }
 
-pub fn Frugalware() -> String {
+pub fn frugalware() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}          `++/::-.`
          /o+++++++++/::-.`
@@ -2097,9 +2262,8 @@ pub fn Frugalware() -> String {
     )
 }
 
-pub fn Funtoo() -> String {
+pub fn funtoo() -> String {
     let c1 = COLORS[5];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}   .dKXXd                         .
   :XXl;:.                      .OXo
@@ -2114,10 +2278,9 @@ xXXXXXX, cXXXNNNXXXXNNXXXXXXXXNNNNKOOK; d0O .k
     )
 }
 
-pub fn GalliumOS() -> String {
+pub fn gallium_os() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}sooooooooooooooooooooooooooooooooooooo+:
 yyooooooooooooooooooooooooooooooooo+/:::
@@ -2141,9 +2304,7 @@ o/:-...................................:"##########
     )
 }
 
-pub fn Garuda() -> String {
-    let c1 = COLORS[7];
-    let c2 = COLORS[7];
+pub fn garuda() -> String {
     let c3 = COLORS[3];
     let c4 = COLORS[7];
     let c5 = COLORS[2];
@@ -2184,7 +2345,7 @@ pub fn gentoo_small() -> String {
     )
 }
 
-pub fn Gentoo() -> String {
+pub fn gentoo() -> String {
     let c1 = COLORS[5];
     let c2 = COLORS[7];
     format!(
@@ -2209,7 +2370,7 @@ yM{c2}MNNNNNNNmmmmmNNMmhs+/{c1}-`
     )
 }
 
-pub fn Pentoo() -> String {
+pub fn pentoo() -> String {
     let c1 = COLORS[5];
     let c2 = COLORS[7];
     format!(
@@ -2254,11 +2415,8 @@ pub fn glaucus() -> String {
     )
 }
 
-pub fn gNewSense() -> String {
+pub fn g_new_sense() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[5];
-    let c3 = COLORS[7];
-    let c4 = COLORS[6];
     format!(
         r##########"{c1}                     ..,,,,..
                .oocchhhhhhhhhhccoo.
@@ -2275,7 +2433,7 @@ ollllllh          +llllllllllll+          hllllllo
     )
 }
 
-pub fn GNOME() -> String {
+pub fn gnome() -> String {
     let c1 = COLORS[4];
     format!(
         r##########"{c1}                               ,@@@@@@@@,
@@ -2302,9 +2460,8 @@ pub fn GNOME() -> String {
     )
 }
 
-pub fn GNU() -> String {
+pub fn gnu() -> String {
     let c1 = COLORS[7];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}    _-`````-,           ,- '- .
   .'   .- - |          | - -.  `.
@@ -2327,11 +2484,8 @@ pub fn GNU() -> String {
     )
 }
 
-pub fn GoboLinux() -> String {
+pub fn gobo_linux() -> String {
     let c1 = COLORS[5];
-    let c2 = COLORS[4];
-    let c3 = COLORS[6];
-    let c4 = COLORS[2];
     format!(
         r##########"{c1}  _____       _
  / ____|     | |
@@ -2342,7 +2496,7 @@ pub fn GoboLinux() -> String {
     )
 }
 
-pub fn Grombyang() -> String {
+pub fn grombyang() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[2];
     let c3 = COLORS[1];
@@ -2370,10 +2524,6 @@ eee        {c2}//  \\ooo/  \\\        {c1}eee
 
 pub fn guix_small() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[7];
-    let c3 = COLORS[6];
-    let c4 = COLORS[1];
-    let c5 = COLORS[8];
     format!(
         r##########"{c1}|.__          __.|
 |__ \\        / __|
@@ -2385,12 +2535,8 @@ pub fn guix_small() -> String {
     )
 }
 
-pub fn Guix() -> String {
+pub fn guix() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[7];
-    let c3 = COLORS[6];
-    let c4 = COLORS[1];
-    let c5 = COLORS[8];
     format!(
         r##########"{c1} ..                             `.
  `--..```..`           `..```..--`
@@ -2407,7 +2553,6 @@ pub fn Guix() -> String {
 
 pub fn haiku_small() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[8];
     format!(
         r##########"{c1}       ,^,
       /   \\
@@ -2420,9 +2565,7 @@ pub fn haiku_small() -> String {
     )
 }
 
-pub fn Haiku() -> String {
-    let c1 = COLORS[1];
-    let c2 = COLORS[3];
+pub fn haiku() -> String {
     let c3 = COLORS[7];
     let c4 = COLORS[2];
     format!(
@@ -2443,7 +2586,7 @@ pub fn Haiku() -> String {
     )
 }
 
-pub fn Huayra() -> String {
+pub fn huayra() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
     format!(
@@ -2467,12 +2610,8 @@ pub fn Huayra() -> String {
     )
 }
 
-pub fn HydroOS() -> String {
+pub fn hydro_os() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[2];
-    let c3 = COLORS[3];
-    let c4 = COLORS[4];
-    let c5 = COLORS[5];
     format!(
         r##########"{c1}
   _    _           _            ____   _____
@@ -2499,7 +2638,7 @@ pub fn hyperbola_small() -> String {
     )
 }
 
-pub fn Hyperbola() -> String {
+pub fn hyperbola() -> String {
     let c1 = COLORS[8];
     format!(
         r##########"{c1}                     WW
@@ -2542,8 +2681,6 @@ pub fn iglunix() -> String {
 pub fn januslinux() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[5];
-    let c3 = COLORS[6];
-    let c4 = COLORS[2];
     format!(
         r##########"{c1}               'l:
         loooooo
@@ -2572,10 +2709,8 @@ looooooooooooo      ;loooooo {c2}looooooc
     )
 }
 
-pub fn Kaisen() -> String {
+pub fn kaisen() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}                          `
                   `:+oyyho.
@@ -2598,7 +2733,7 @@ odhdddddddo- `ddddh+-``....-+hdddddds.
     )
 }
 
-pub fn Kali() -> String {
+pub fn kali() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[8];
     format!(
@@ -2626,10 +2761,8 @@ pub fn Kali() -> String {
     )
 }
 
-pub fn KaOS() -> String {
+pub fn ka_os() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}                     ..
   .....         ..OSSAAAAAAA..
@@ -2650,9 +2783,8 @@ KKKKKKS. .SSAA..
     )
 }
 
-pub fn KDE() -> String {
+pub fn kde() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}             `..---+/---..`
          `---.``   ``   `.---.`
@@ -2676,7 +2808,7 @@ pub fn KDE() -> String {
     )
 }
 
-pub fn Kibojoe() -> String {
+pub fn kibojoe() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[7];
     let c3 = COLORS[4];
@@ -2697,10 +2829,8 @@ ods+/:-----://+oyydmNMMMMMMMMMMMMMMMMMN-
     )
 }
 
-pub fn Kogaion() -> String {
+pub fn kogaion() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}            ;;      ,;
            ;;;     ,;;
@@ -2725,10 +2855,9 @@ pub fn Kogaion() -> String {
     )
 }
 
-pub fn Korora() -> String {
+pub fn korora() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}                ____________
              _add55555555554{c1}:
@@ -2749,10 +2878,9 @@ pub fn Korora() -> String {
     )
 }
 
-pub fn KSLinux() -> String {
+pub fn ks_linux() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1} K   K U   U RRRR   ooo
  K  K  U   U R   R o   o
@@ -2768,10 +2896,9 @@ pub fn KSLinux() -> String {
     )
 }
 
-pub fn Kubuntu() -> String {
+pub fn kubuntu() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}           `.:/ossyyyysso/:.
         .:oyyyyyyyyyyyyyyyyyyo:`
@@ -2796,10 +2923,8 @@ oyyyyysos{c2}dy{c1}yyyyyyyyyyyyyyyyyy{c2}dMMMMy{c1}syyyo
     )
 }
 
-pub fn LEDE() -> String {
+pub fn lede() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1} _________
     /        /\
@@ -2813,8 +2938,7 @@ pub fn LEDE() -> String {
     )
 }
 
-pub fn LaxerOS() -> String {
-    let c1 = COLORS[7];
+pub fn laxer_os() -> String {
     let c2 = COLORS[4];
     format!(
         r##########"{c2}
@@ -2841,7 +2965,7 @@ pub fn LaxerOS() -> String {
     )
 }
 
-pub fn LibreELEC() -> String {
+pub fn libre_elec() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[3];
     let c3 = COLORS[7];
@@ -2871,7 +2995,7 @@ pub fn LibreELEC() -> String {
     )
 }
 
-pub fn Linux() -> String {
+pub fn linux() -> String {
     let c1 = COLORS[7];
     let c2 = COLORS[8];
     let c3 = COLORS[3];
@@ -2905,9 +3029,8 @@ pub fn linuxlite_small() -> String {
     )
 }
 
-pub fn Linux_Lite() -> String {
+pub fn linux_lite() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}          ,xXc
       .l0MMMMMO
@@ -2932,7 +3055,7 @@ pub fn Linux_Lite() -> String {
     )
 }
 
-pub fn LMDE() -> String {
+pub fn lmde() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[7];
     format!(
@@ -2956,10 +3079,9 @@ pub fn LMDE() -> String {
     )
 }
 
-pub fn Lubuntu() -> String {
+pub fn lubuntu() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}           `.:/ossyyyysso/:.
         `.:yyyyyyyyyyyyyyyyyy:.`
@@ -2984,9 +3106,8 @@ pub fn Lubuntu() -> String {
     )
 }
 
-pub fn Lunar() -> String {
+pub fn lunar() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
     let c3 = COLORS[3];
     format!(
         r##########"{c1}`-.                                 `-.
@@ -3037,7 +3158,7 @@ pub fn mageia_small() -> String {
     )
 }
 
-pub fn Mageia() -> String {
+pub fn mageia() -> String {
     let c1 = COLORS[6];
     let c2 = COLORS[7];
     format!(
@@ -3063,7 +3184,7 @@ lOO.                .OO:
     )
 }
 
-pub fn MagpieOS() -> String {
+pub fn magpie_os() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[1];
     let c3 = COLORS[3];
@@ -3092,7 +3213,7 @@ o00.              k0O{c2}dddddd{c1}occ
     )
 }
 
-pub fn Mandriva() -> String {
+pub fn mandriva() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[3];
     format!(
@@ -3116,7 +3237,6 @@ pub fn Mandriva() -> String {
 
 pub fn manjaro_small() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}||||||||| ||||
 ||||||||| ||||
@@ -3128,9 +3248,8 @@ pub fn manjaro_small() -> String {
     )
 }
 
-pub fn Manjaro() -> String {
+pub fn manjaro() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}██████████████████  ████████
 ██████████████████  ████████
@@ -3178,9 +3297,8 @@ pub fn Manjaro() -> String {
 //     )
 // }
 
-pub fn Maui() -> String {
+pub fn maui() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}             `.-://////:--`
          .:/oooooooooooooooo+:.
@@ -3205,10 +3323,8 @@ pub fn Maui() -> String {
     )
 }
 
-pub fn Mer() -> String {
+pub fn mer() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}                         dMs
                          .-`
@@ -3240,10 +3356,9 @@ NNd   sNN-  -NNs  -mMNs-.--..:dMMh`  dNN
     )
 }
 
-pub fn Minix() -> String {
+pub fn minix() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c2}   -sdhyo+:-`                -/syymm:
    sdyooymmNNy.     ``    .smNmmdysNd
@@ -3279,7 +3394,7 @@ pub fn linuxmint_small() -> String {
     )
 }
 
-pub fn Linux_Mint_Old() -> String {
+pub fn linux_mint_old() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[7];
     format!(
@@ -3302,7 +3417,7 @@ ddddMMh  {c2}dMM   :hNMNMNhNMNMNh: {c1}`NMm
     )
 }
 
-pub fn Linux_Mint() -> String {
+pub fn linux_mint() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[7];
     format!(
@@ -3328,7 +3443,7 @@ pub fn Linux_Mint() -> String {
     )
 }
 
-pub fn Live_Raizo() -> String {
+pub fn live_raizo() -> String {
     let c1 = COLORS[3];
     format!(
         r##########"{c1}             `......`
@@ -3355,8 +3470,6 @@ mMMMs  dMMMo sMMMMMMd yMMMd  sMMMm
 }
 
 pub fn mx_small() -> String {
-    let c1 = COLORS[4];
-    let c2 = COLORS[6];
     let c3 = COLORS[7];
     format!(
         r##########"{c3}    \\\\  /
@@ -3369,9 +3482,7 @@ pub fn mx_small() -> String {
     )
 }
 
-pub fn MX() -> String {
-    let c1 = COLORS[4];
-    let c2 = COLORS[6];
+pub fn mx() -> String {
     let c3 = COLORS[7];
     format!(
         r##########"{c3}MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMMMMMMMM
@@ -3394,7 +3505,7 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"##########
     )
 }
 
-pub fn Namib() -> String {
+pub fn namib() -> String {
     let c1 = COLORS[1];
     format!(
         r##########"{c1}          .:+shysyhhhhysyhs+:.
@@ -3420,7 +3531,7 @@ sd yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy ds
     )
 }
 
-pub fn Neptune() -> String {
+pub fn neptune() -> String {
     let c1 = COLORS[7];
     format!(
         r##########"{c1}            ./+sydddddddys/-.
@@ -3457,7 +3568,7 @@ pub fn netbsd_small() -> String {
     )
 }
 
-pub fn NetBSD() -> String {
+pub fn net_bsd() -> String {
     let c1 = COLORS[5];
     let c2 = COLORS[7];
     format!(
@@ -3481,10 +3592,8 @@ pub fn NetBSD() -> String {
     )
 }
 
-pub fn Netrunner() -> String {
+pub fn netrunner() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}           .:oydmMMMMMMmdyo:`
         -smMMMMMMMMMMMMMMMMMMds-
@@ -3509,7 +3618,7 @@ mMMMMMMMMMMMMMMMMMs    -NMMMMMMMMMMMMMMd
     )
 }
 
-pub fn Nitrux() -> String {
+pub fn nitrux() -> String {
     let c1 = COLORS[4];
     format!(
         r##########"{c1}`:/.
@@ -3535,7 +3644,6 @@ pub fn Nitrux() -> String {
 
 pub fn nixos_small() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[6];
     format!(
         r##########"{c1}  \\\\  \\\\ //
  ==\\\\__\\\\/ //
@@ -3573,7 +3681,7 @@ pub fn nixos_old() -> String {
     )
 }
 
-pub fn NixOS() -> String {
+pub fn nix_os() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[6];
     format!(
@@ -3600,7 +3708,7 @@ pub fn NixOS() -> String {
     )
 }
 
-pub fn Nurunner() -> String {
+pub fn nurunner() -> String {
     let c1 = COLORS[4];
     format!(
         r##########"{c1}                  ,xc
@@ -3625,9 +3733,8 @@ pub fn Nurunner() -> String {
     )
 }
 
-pub fn NuTyX() -> String {
+pub fn nu_ty_x() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[1];
     format!(
         r##########"{c1}                                      .
                                     .
@@ -3655,10 +3762,8 @@ pub fn NuTyX() -> String {
     )
 }
 
-pub fn OBRevenge() -> String {
+pub fn ob_revenge() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}   __   __
      _@@@@   @@@g_
@@ -3684,9 +3789,6 @@ Q@@@@@ggg@@f@   @@@@@@L
 pub fn openbsd_small() -> String {
     let c1 = COLORS[3];
     let c2 = COLORS[7];
-    let c3 = COLORS[6];
-    let c4 = COLORS[1];
-    let c5 = COLORS[8];
     format!(
         r##########"{c1}      _____
     \\-     -/
@@ -3698,9 +3800,8 @@ pub fn openbsd_small() -> String {
     )
 }
 
-pub fn OpenBSD() -> String {
+pub fn open_bsd() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[7];
     let c3 = COLORS[6];
     let c4 = COLORS[1];
     let c5 = COLORS[8];
@@ -3731,10 +3832,9 @@ __J  _   _.     >-'  {c1}){c4}._.   {c1}|-'
     )
 }
 
-pub fn openEuler() -> String {
+pub fn open_euler() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}                 `.cc.`
              ``.cccccccc..`
@@ -3762,10 +3862,9 @@ pub fn openEuler() -> String {
     )
 }
 
-pub fn OpenIndiana() -> String {
+pub fn open_indiana() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}                         .sy/
                          .yh+
@@ -3814,7 +3913,7 @@ pub fn openmamba() -> String {
     )
 }
 
-pub fn OpenMandriva() -> String {
+pub fn open_mandriva() -> String {
     let c1 = COLORS[4];
     format!(
         r##########"{c1}                  ``````
@@ -3842,7 +3941,7 @@ pub fn OpenMandriva() -> String {
     )
 }
 
-pub fn OpenStage() -> String {
+pub fn open_stage() -> String {
     let c1 = COLORS[2];
     format!(
         r##########"{c1}                 /(/
@@ -3865,10 +3964,8 @@ pub fn OpenStage() -> String {
     )
 }
 
-pub fn OpenWrt() -> String {
+pub fn open_wrt() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1} _______
 |       |.-----.-----.-----.
@@ -3882,10 +3979,8 @@ pub fn OpenWrt() -> String {
     )
 }
 
-pub fn Open_Source_Media_Center() -> String {
+pub fn open_source_media_center() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}            -+shdmNNNNmdhs+-
         .+hMNho/:..``..:/ohNMh+.
@@ -3910,10 +4005,8 @@ yM+         dM/+NNo`     :Md         +My
     )
 }
 
-pub fn Oracle() -> String {
+pub fn oracle() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}
       `-/+++++++++++++++++/-.`
@@ -3930,10 +4023,8 @@ pub fn Oracle() -> String {
     )
 }
 
-pub fn OS_Elbrus() -> String {
+pub fn os_elbrus() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
    ██▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀██
@@ -3952,10 +4043,8 @@ pub fn OS_Elbrus() -> String {
     )
 }
 
-pub fn PacBSD() -> String {
+pub fn pac_bsd() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}      :+sMs.
   `:ddNMd-                         -o--`
@@ -3986,7 +4075,6 @@ pub fn PacBSD() -> String {
 
 pub fn parabola_small() -> String {
     let c1 = COLORS[5];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}  __ __ __  _
 .`_//_//_/ / `.
@@ -3997,9 +4085,8 @@ pub fn parabola_small() -> String {
     )
 }
 
-pub fn Parabola() -> String {
+pub fn parabola() -> String {
     let c1 = COLORS[5];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}                          `.-.    `.
                    `.`  `:++.   `-+o+.
@@ -4020,12 +4107,8 @@ pub fn Parabola() -> String {
     )
 }
 
-pub fn Pardus() -> String {
+pub fn pardus() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[7];
-    let c3 = COLORS[6];
-    let c4 = COLORS[1];
-    let c5 = COLORS[8];
     format!(
         r##########"{c1} .smNdy+-    `.:/osyyso+:.`    -+ydmNs.
 /Md- -/ymMdmNNdhso/::/oshdNNmdMmy/. :dM/
@@ -4048,9 +4131,8 @@ mN.     oMdyy- -y          `-dMo     .Nm
     )
 }
 
-pub fn Parrot() -> String {
+pub fn parrot() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}  `:oho/-`
 `mMMMMMMMMMMMNmmdhy-
@@ -4079,7 +4161,7 @@ pub fn Parrot() -> String {
     )
 }
 
-pub fn Parsix() -> String {
+pub fn parsix() -> String {
     let c1 = COLORS[3];
     let c2 = COLORS[1];
     let c3 = COLORS[7];
@@ -4109,10 +4191,8 @@ pub fn Parsix() -> String {
     )
 }
 
-pub fn PCBSD() -> String {
+pub fn pcbsd() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}                       ..
                         s.
@@ -4144,10 +4224,9 @@ h-  `+ymMMMMMMMM--M+hMMN/    +MMMMy   -h
     )
 }
 
-pub fn PCLinuxOS() -> String {
+pub fn pc_linux_os() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}            mhhhyyyyhhhdN
         dyssyhhhhhhhhhhhssyhN
@@ -4171,8 +4250,7 @@ yyhh-   {c2}ymm-       /dmdyosyd`  {c1}`yhh+
     )
 }
 
-pub fn Pengwin() -> String {
-    let c1 = COLORS[5];
+pub fn pengwin() -> String {
     let c2 = COLORS[5];
     let c3 = COLORS[13];
     format!(
@@ -4194,10 +4272,9 @@ pub fn Pengwin() -> String {
     )
 }
 
-pub fn Peppermint() -> String {
+pub fn peppermint() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[15];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}               PPPPPPPPPPPPPP
 {c1}           PPPP{c2}MMMMMMM{c1}PPPPPPPPPPP
@@ -4283,7 +4360,6 @@ pub fn Peppermint() -> String {
 
 pub fn popos_small() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}______
 \\   _ \\        __
@@ -4296,7 +4372,7 @@ pub fn popos_small() -> String {
     )
 }
 
-pub fn Pop_OS() -> String {
+pub fn pop_os() -> String {
     let c1 = COLORS[6];
     let c2 = COLORS[7];
     format!(
@@ -4323,9 +4399,8 @@ pub fn Pop_OS() -> String {
     )
 }
 
-pub fn Porteus() -> String {
+pub fn porteus() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}             `.-:::-.`
          -+ydmNNNNNNNmdy+-
@@ -4355,7 +4430,6 @@ s:  yNm+`   .smNd+.
 
 pub fn postmarketos_small() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}        /\\
        /  \\
@@ -4369,9 +4443,8 @@ pub fn postmarketos_small() -> String {
     )
 }
 
-pub fn PostMarketOS() -> String {
+pub fn post_market_os() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}                 /\\
                 /  \\
@@ -4394,7 +4467,7 @@ pub fn PostMarketOS() -> String {
     )
 }
 
-pub fn PuffOS() -> String {
+pub fn puff_os() -> String {
     let c1 = COLORS[3];
     format!(
         r##########"{c1}
@@ -4440,9 +4513,8 @@ pub fn PuffOS() -> String {
 //     )
 // }
 
-pub fn Puppy() -> String {
+pub fn puppy() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}           `-/osyyyysosyhhhhhyys+-
   -ohmNNmh+/hMMMMMMMMNNNNd+dMMMMNM+
@@ -4467,8 +4539,6 @@ pub fn Puppy() -> String {
 
 pub fn pureos_small() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
-    let c3 = COLORS[7];
     format!(
         r##########"{c1} _____________
 |  _________  |
@@ -4479,10 +4549,8 @@ pub fn pureos_small() -> String {
     )
 }
 
-pub fn PureOS() -> String {
+pub fn pure_os() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
-    let c3 = COLORS[7];
     format!(
         r##########"{c1}dmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmd
 dNm//////////////////////////////////mNd
@@ -4499,11 +4567,8 @@ dmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmd"##########
     )
 }
 
-pub fn Qubes() -> String {
+pub fn qubes() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[5];
-    let c3 = COLORS[7];
-    let c4 = COLORS[6];
     format!(
         r##########"{c1}               `..--..`
             `.----------.`
@@ -4529,11 +4594,10 @@ pub fn Qubes() -> String {
     )
 }
 
-pub fn Qubyt() -> String {
+pub fn qubyt() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[5];
     let c3 = COLORS[0];
-    let c4 = COLORS[4];
     format!(
         r##########"{c1}    ########################{c2}({c3}ooo
 {c1}    ########################{c2}({c3}ooo
@@ -4553,7 +4617,7 @@ pub fn Qubyt() -> String {
     )
 }
 
-pub fn Quibian() -> String {
+pub fn quibian() -> String {
     let c1 = COLORS[3];
     let c2 = COLORS[7];
     format!(
@@ -4578,7 +4642,7 @@ pub fn Quibian() -> String {
     )
 }
 
-pub fn Radix() -> String {
+pub fn radix() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[2];
     format!(
@@ -4603,7 +4667,7 @@ yMMMMMMMMMMMMMMMMNNh.
     )
 }
 
-pub fn Raspbian_small() -> String {
+pub fn raspbian_small() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[1];
     format!(
@@ -4619,7 +4683,7 @@ pub fn Raspbian_small() -> String {
     )
 }
 
-pub fn Raspbian() -> String {
+pub fn raspbian() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[1];
     format!(
@@ -4649,9 +4713,8 @@ pub fn Raspbian() -> String {
     )
 }
 
-pub fn Reborn_OS() -> String {
+pub fn reborn_os() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[2];
     let c3 = COLORS[8];
     format!(
         r##########"{c3}
@@ -4675,10 +4738,8 @@ NM  {c1}dd  hh   {c3}mMMMMMMMMMMm   {c1}hh  dd  {c3}MN
     )
 }
 
-pub fn Red_Star() -> String {
+pub fn red_star() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}                    ..
                   .oK0l
@@ -4701,7 +4762,7 @@ pub fn Red_Star() -> String {
     )
 }
 
-pub fn Redcore() -> String {
+pub fn redcore() -> String {
     let c1 = COLORS[1];
     format!(
         r##########"{c1}                 RRRRRRRRR
@@ -4726,7 +4787,6 @@ RRRR     RRRRRRRRRRRRRRRRRRR  R   RRRR
 pub fn redhat_old() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}             `.-..........`
             `////////::.`-/.
@@ -4747,7 +4807,7 @@ MMM    MMMMMMMMMMMMMMyyddMMM+
     )
 }
 
-pub fn Redhat() -> String {
+pub fn redhat() -> String {
     let c1 = COLORS[1];
     format!(
         r##########"{c1}           .MMM..:MMMMMMM
@@ -4771,8 +4831,7 @@ MMMMMMMMMMM.                     MMMM
     )
 }
 
-pub fn Refracted_Devuan() -> String {
-    let c1 = COLORS[8];
+pub fn refracted_devuan() -> String {
     let c2 = COLORS[7];
     format!(
         r##########"{c2}                             A
@@ -4796,7 +4855,7 @@ pub fn Refracted_Devuan() -> String {
     )
 }
 
-pub fn Regata() -> String {
+pub fn regata() -> String {
     let c1 = COLORS[7];
     let c2 = COLORS[1];
     let c3 = COLORS[4];
@@ -4827,7 +4886,7 @@ d/hhhhhhhhhhhh{c3}`-/osyso+-`{c1}hhhhhhhhhhhh.h
     )
 }
 
-pub fn Regolith() -> String {
+pub fn regolith() -> String {
     let c1 = COLORS[1];
     format!(
         r##########"{c1}
@@ -4895,10 +4954,8 @@ pub fn rocky_small() -> String {
 //   )
 // }
 
-pub fn Rosa() -> String {
+pub fn rosa() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}           ROSAROSAROSAROSAR
         ROSA               AROS
@@ -4924,9 +4981,7 @@ RO  ROSA  ROS     ROSAROSAR  ROSARO  RO
 }
 
 pub fn sabotage() -> String {
-    let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2} .|'''.|      |     '||''|.    ..|''||
  ||..  '     |||     ||   ||  .|'    ||
@@ -4942,10 +4997,9 @@ pub fn sabotage() -> String {
     )
 }
 
-pub fn Sabayon() -> String {
+pub fn sabayon() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}            ...........
          ..             ..
@@ -4968,11 +5022,8 @@ pub fn Sabayon() -> String {
     )
 }
 
-pub fn Sailfish() -> String {
+pub fn sailfish() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[5];
-    let c3 = COLORS[7];
-    let c4 = COLORS[6];
     format!(
         r##########"{c1}                 _a@b
               _#b (b
@@ -4990,7 +5041,7 @@ pub fn Sailfish() -> String {
     )
 }
 
-pub fn SalentOS() -> String {
+pub fn salent_os() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[1];
     let c3 = COLORS[3];
@@ -5019,7 +5070,7 @@ pub fn SalentOS() -> String {
     )
 }
 
-pub fn Scientific() -> String {
+pub fn scientific() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
     let c3 = COLORS[1];
@@ -5047,7 +5098,7 @@ M-       ,=;;;#:,      ,:#;;:=,       ,@
     )
 }
 
-pub fn Septor() -> String {
+pub fn septor() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
     let c3 = COLORS[4];
@@ -5075,9 +5126,8 @@ yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"##########
     )
 }
 
-pub fn Serene() -> String {
+pub fn serene() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
     format!(
         r##########"{c1}              __---''''''---__
           .                      .
@@ -5102,9 +5152,8 @@ pub fn Serene() -> String {
     )
 }
 
-pub fn SharkLinux() -> String {
+pub fn shark_linux() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}                              `:shd/
                           `:yNMMMMs
@@ -5153,8 +5202,6 @@ pub fn SharkLinux() -> String {
 
 pub fn slackware_small() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}   ________
   /  ______|
@@ -5166,10 +5213,9 @@ pub fn slackware_small() -> String {
     )
 }
 
-pub fn Slackware() -> String {
+pub fn slackware() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}                  :::::::
             :::::::::::::::::::
@@ -5195,9 +5241,8 @@ pub fn Slackware() -> String {
     )
 }
 
-pub fn SliTaz() -> String {
+pub fn sli_taz() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[3];
     format!(
         r##########"{c1}        @    @(               @
       @@   @@                  @    @/
@@ -5219,9 +5264,8 @@ pub fn SliTaz() -> String {
     )
 }
 
-pub fn SmartOS() -> String {
+pub fn smart_os() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
@@ -5260,10 +5304,9 @@ yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"##########
 //   )
 // }
 
-pub fn Solus() -> String {
+pub fn solus() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}            -```````````
           `-+/------------.`
@@ -5288,10 +5331,8 @@ pub fn Solus() -> String {
     )
 }
 
-pub fn Source_Mage() -> String {
-    let c1 = COLORS[4];
+pub fn source_mage() -> String {
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}       :ymNMNho.
 .+sdmNMMMMMMMMMMy`
@@ -5317,9 +5358,8 @@ pub fn Source_Mage() -> String {
     )
 }
 
-pub fn Sparky() -> String {
+pub fn sparky() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}
            .            `-:-`
@@ -5345,7 +5385,7 @@ pub fn Sparky() -> String {
     )
 }
 
-pub fn Star() -> String {
+pub fn star() -> String {
     let c1 = COLORS[7];
     format!(
         r##########"{c1}                   ./
@@ -5370,7 +5410,7 @@ pub fn Star() -> String {
     )
 }
 
-pub fn SteamOS() -> String {
+pub fn steam_os() -> String {
     let c1 = COLORS[5];
     let c2 = COLORS[7];
     format!(
@@ -5397,7 +5437,6 @@ pub fn SteamOS() -> String {
 
 pub fn sunos_small() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}       .   .;   .
    .   :;  ::  ;:   .
@@ -5407,8 +5446,7 @@ pub fn sunos_small() -> String {
     )
 }
 
-pub fn openSUSE_Leap() -> String {
-    let c1 = COLORS[2];
+pub fn open_suse_leap() -> String {
     let c2 = COLORS[7];
     format!(
         r##########"{c2}                 `-++:`
@@ -5444,8 +5482,7 @@ TTTTTTTTTT
     )
 }
 
-pub fn openSUSE_Tumbleweed() -> String {
-    let c1 = COLORS[2];
+pub fn open_suse_tumbleweed() -> String {
     let c2 = COLORS[7];
     format!(
         r##########"{c2}                                     ......
@@ -5466,7 +5503,6 @@ pub fn openSUSE_Tumbleweed() -> String {
 
 pub fn opensuse_small() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}  _______
 __|   __ \\
@@ -5478,7 +5514,7 @@ __________/"##########
     )
 }
 
-pub fn openSUSE() -> String {
+pub fn open_suse() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[7];
     format!(
@@ -5503,10 +5539,9 @@ dKK{c1}KKKKKKKKKK;.;oOKx,..{c2}^{c1}..;kKKK0.{c2}  dKd
     )
 }
 
-pub fn SwagArch() -> String {
+pub fn swag_arch() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}        .;ldkOKXXNNNNXXK0Oxoc,.
    ,lkXMMNK0OkkxkkOKWMMMMMMMMMM;
@@ -5526,9 +5561,8 @@ pub fn SwagArch() -> String {
     )
 }
 
-pub fn Tails() -> String {
+pub fn tails() -> String {
     let c1 = COLORS[5];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}      ``
   ./yhNh
@@ -5552,7 +5586,7 @@ Nsyh+-..+y+-   yMMMMd   :mMM+
     )
 }
 
-pub fn Trisquel() -> String {
+pub fn trisquel() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[6];
     format!(
@@ -5577,7 +5611,7 @@ pub fn Trisquel() -> String {
     )
 }
 
-pub fn Ubuntu_Cinnamon() -> String {
+pub fn ubuntu_cinnamon() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
     format!(
@@ -5604,10 +5638,8 @@ oooo{c2}+ymdosMo{c1}ooo{c2}+mMm{c1}+/{c2}hMMMMMh+hs{c1}ooooooooo
     )
 }
 
-pub fn Ubuntu_Budgie() -> String {
-    let c1 = COLORS[4];
+pub fn ubuntu_budgie() -> String {
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c2}           ./oydmMMMMMMmdyo/.
         :smMMMMMMMMMMMhs+:++yhs:
@@ -5632,9 +5664,7 @@ oMm/        .dMMMMMMMMh:      :dMMMMMMMo
     )
 }
 
-pub fn Ubuntu_GNOME() -> String {
-    let c1 = COLORS[4];
-    let c2 = COLORS[5];
+pub fn ubuntu_gnome() -> String {
     let c3 = COLORS[7];
     let c4 = COLORS[6];
     format!(
@@ -5657,7 +5687,7 @@ pub fn Ubuntu_GNOME() -> String {
     )
 }
 
-pub fn Ubuntu_MATE() -> String {
+pub fn ubuntu_mate() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[7];
     format!(
@@ -5710,7 +5740,7 @@ pub fn ubuntu_old() -> String {
     )
 }
 
-pub fn Ubuntu_Studio() -> String {
+pub fn ubuntu_studio() -> String {
     let c1 = COLORS[6];
     let c2 = COLORS[7];
     format!(
@@ -5739,8 +5769,6 @@ pub fn Ubuntu_Studio() -> String {
 
 pub fn ubuntu_small() -> String {
     let c1 = COLORS[1];
-    let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}         _
      ---(_)
@@ -5751,10 +5779,9 @@ pub fn ubuntu_small() -> String {
     )
 }
 
-pub fn Ubuntu() -> String {
+pub fn ubuntu() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
-    let c3 = COLORS[3];
     format!(
         r##########"{c1}            .-/+oossssoo+\-.
         ´:+ssssssssssssssssss+:`
@@ -5779,7 +5806,7 @@ oss{c2}yNMMMNyMMh{c1}sssssssssssssshmmmh{c1}ssssssso
     )
 }
 
-pub fn Univention() -> String {
+pub fn univention() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[7];
     format!(
@@ -5806,9 +5833,8 @@ pub fn Univention() -> String {
     )
 }
 
-pub fn Venom() -> String {
+pub fn venom() -> String {
     let c1 = COLORS[8];
-    let c2 = COLORS[4];
     format!(
         r##########"{c1}   :::::::          :::::::
    mMMMMMMm        dMMMMMMm
@@ -5830,7 +5856,6 @@ pub fn Venom() -> String {
 
 pub fn void_small() -> String {
     let c1 = COLORS[2];
-    let c2 = COLORS[8];
     format!(
         r##########"{c1}    _______
  _ \\______ -
@@ -5897,7 +5922,7 @@ pub fn void_small() -> String {
 //   )
 // }
 
-pub fn LangitKetujuh() -> String {
+pub fn langit_ketujuh() -> String {
     let c1 = COLORS[7];
     let c2 = COLORS[4];
     format!(
@@ -5936,11 +5961,8 @@ pub fn semc() -> String {
     )
 }
 
-pub fn Obarun() -> String {
+pub fn obarun() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[6];
-    let c3 = COLORS[7];
-    let c4 = COLORS[1];
     format!(
         r##########"{c1}                    ,;::::;
                 ;cooolc;,
@@ -5964,9 +5986,8 @@ pub fn Obarun() -> String {
     )
 }
 
-pub fn Windows_11() -> String {
+pub fn windows11() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}
 ################  ################
@@ -5987,9 +6008,8 @@ pub fn Windows_11() -> String {
     )
 }
 
-pub fn Windows_10() -> String {
+pub fn windows10() -> String {
     let c1 = COLORS[6];
-    let c2 = COLORS[7];
     format!(
         r##########"{c1}                                ..,
                     ....,,:;+ccllll
@@ -6013,7 +6033,7 @@ llllllllllllll  lllllllllllllllllll
     )
 }
 
-pub fn Windows() -> String {
+pub fn windows() -> String {
     let c1 = COLORS[1];
     let c2 = COLORS[2];
     let c3 = COLORS[4];
@@ -6038,10 +6058,9 @@ pub fn Windows() -> String {
     )
 }
 
-pub fn Xubuntu() -> String {
+pub fn xubuntu() -> String {
     let c1 = COLORS[4];
     let c2 = COLORS[7];
-    let c3 = COLORS[1];
     format!(
         r##########"{c1}           `.:/ossyyyysso/:.
         `.yyyyyyyyyyyyyyyyyyyy.`
@@ -6066,9 +6085,8 @@ yyyyyyy{c2}+MMMMMMMMMMMMMMMMMMMMMMMM/{c1}yyyyyyy
     )
 }
 
-pub fn Zorin() -> String {
+pub fn zorin() -> String {
     let c1 = COLORS[4];
-    let c2 = COLORS[6];
     format!(
         r##########"{c1}        `osssssssssssssssssssso`
        .osssssssssssssssssssssso.
@@ -6090,7 +6108,7 @@ ssssssssssssso/-`      `-/osssssssssssss
     )
 }
 
-pub fn Darwin() -> String {
+pub fn darwin() -> String {
     let c1 = COLORS[2];
     let c2 = COLORS[3];
     let c3 = COLORS[1];
@@ -6118,9 +6136,8 @@ pub fn Darwin() -> String {
     )
 }
 
-pub fn Profelis_SambaBOX() -> String {
+pub fn profelis_samba_box() -> String {
     let c1 = COLORS[3];
-    let c2 = COLORS[6];
     format!(
         r##########"{c1}
                     #

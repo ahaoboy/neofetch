@@ -1,6 +1,5 @@
 use crate::share::{get_pid_name, get_ppid};
-
-pub fn get_terminal() -> Option<String> {
+pub async fn get_terminal() -> Option<String> {
     if std::env::var("WT_SESSION").is_ok() {
         return Some("Windows Terminal".into());
     }

@@ -1,3 +1,6 @@
+use human_bytes::human_bytes;
+use std::fmt::Display;
+
 #[derive(Debug, Clone)]
 pub struct Disk {
     pub name: String,
@@ -10,43 +13,34 @@ impl Display for Disk {
         let used = human_bytes(self.used as f64);
         let total = human_bytes(self.total as f64);
         let percent = (self.used as f64 / self.total as f64) * 100.;
-        f.write_str(&format!("{used} / {total} ({:2.0}%)", percent))
+        f.write_str(&format!("{used} / {total} ({percent:2.0}%)"))
     }
 }
 
-use std::fmt::Display;
-
-use human_bytes::human_bytes;
-
-use crate::share::exec;
-
 #[cfg(windows)]
-pub fn get_disk() -> Option<Vec<Disk>> {
-    use regex::Regex;
-    let s = exec("wmic", ["logicaldisk", "get", "deviceid,freespace,size"]).or(exec(
-        "powershell",
-        [
-            "-c",
-            "Get-CimInstance Win32_logicaldisk | Select-Object deviceid,freespace,size",
-        ],
-    ))?;
-    let mut v = vec![];
-    let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)").ok()?;
-    for line in s.lines() {
-        let s = line.trim().to_string();
-        if let Some(cap) = re.captures(&s) {
-            let name = cap.get(1).unwrap().as_str().to_string();
-            if let (Ok(free), Ok(total)) = (
-                cap.get(2).unwrap().as_str().parse::<u64>(),
-                cap.get(3).unwrap().as_str().parse::<u64>(),
-            ) {
-                let used = total - free;
-                let disk = Disk { name, used, total };
-                v.push(disk);
-            }
-        }
+pub async fn get_disk() -> Option<Vec<Disk>> {
+    use crate::share::wmi_query;
+    use serde::Deserialize;
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename = "Win32_logicaldisk")]
+    struct Logicaldisk {
+        #[serde(rename = "DeviceID")]
+        device_id: String,
+        #[serde(rename = "FreeSpace")]
+        free_space: u64,
+        #[serde(rename = "Size")]
+        size: u64,
     }
 
+    let results: Vec<Logicaldisk> = wmi_query().await?;
+    let mut v = vec![];
+    for i in results {
+        v.push(Disk {
+            name: i.device_id,
+            total: i.size,
+            used: i.size - i.free_space,
+        })
+    }
     Some(v)
 }
 
@@ -60,13 +54,15 @@ const DISK_SKIP: [&str; 2] = ["overlay", "/dev/block"];
 const DISK_SKIP: [&str; 1] = ["devfs"];
 
 #[cfg(unix)]
-pub fn get_disk() -> Option<Vec<Disk>> {
+pub async fn get_disk() -> Option<Vec<Disk>> {
     use regex::Regex;
-    let s = exec("df", [])?;
+
+    use crate::share::exec_async;
+    let s = exec_async("df", []).await?;
 
     let mut v = vec![];
+    let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)\s+([0-9]+).*?").ok()?;
     for line in s.lines().skip(1) {
-        let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)\s+([0-9]+).*?").ok()?;
         let cap = re.captures(line.trim())?;
         let name = cap.get(1).unwrap().as_str().to_string();
 

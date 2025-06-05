@@ -38,8 +38,22 @@ pub static BRIGHT_CYAN_BG: &str = "\x1b[106m";
 pub static BRIGHT_WHITE_BG: &str = "\x1b[107m";
 
 pub static COLORS: [&str; 16] = [
-  BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE,
-  BRIGHT_BLACK, BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW, BRIGHT_BLUE, BRIGHT_MAGENTA, BRIGHT_CYAN, BRIGHT_WHITE,
+    BLACK,
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+    BRIGHT_BLACK,
+    BRIGHT_RED,
+    BRIGHT_GREEN,
+    BRIGHT_YELLOW,
+    BRIGHT_BLUE,
+    BRIGHT_MAGENTA,
+    BRIGHT_CYAN,
+    BRIGHT_WHITE,
 ];
 
 pub fn cursor_up(n: usize) -> String {

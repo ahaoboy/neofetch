@@ -1,21 +1,25 @@
 #[derive(Debug, Clone)]
 pub struct Packages {
-    snap: Vec<String>,
-    dpkg: Vec<String>,
-    pacman: Vec<String>,
+    snap: usize,
+    dpkg: usize,
+    pacman: usize,
+    scoop: usize,
 }
 
 impl Display for Packages {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut v = Vec::new();
-        if !self.dpkg.is_empty() {
-            v.push(format!("{} (dpkg)", self.dpkg.len()))
+        if self.dpkg > 0 {
+            v.push(format!("{} (dpkg)", self.dpkg))
         }
-        if !self.snap.is_empty() {
-            v.push(format!("{} (snap)", self.snap.len()))
+        if self.snap > 0 {
+            v.push(format!("{} (snap)", self.snap))
         }
-        if !self.pacman.is_empty() {
-            v.push(format!("{} (pacman)", self.pacman.len()))
+        if self.pacman > 0 {
+            v.push(format!("{} (pacman)", self.pacman))
+        }
+        if self.scoop > 0 {
+            v.push(format!("{} (scoop)", self.scoop))
         }
 
         f.write_str(&v.join(", "))
@@ -24,23 +28,56 @@ impl Display for Packages {
 
 use std::fmt::Display;
 
-use crate::share::exec;
+fn pacman() -> Option<usize> {
+    #[cfg(unix)]
+    let dir = std::path::Path::new("/var/lib/pacman/local");
+    #[cfg(windows)]
+    let dir = std::path::Path::new(&std::env::var("MSYSTEM_PREFIX").ok()?.to_string())
+        .parent()
+        .unwrap_or(std::path::Path::new("/"))
+        .join("var/lib/pacman/local");
 
-pub fn get_packages() -> Option<Packages> {
-    let snap: Vec<String> = if let Some(s) = exec("snap", ["list"]) {
-        s.lines().skip(1).map(|i| i.to_string()).collect()
-    } else {
-        Vec::new()
-    };
-    let dpkg: Vec<String> = if let Some(s) = exec("dpkg", ["-l"]) {
-        s.lines().skip(5).map(|i| i.to_string()).collect()
-    } else {
-        Vec::new()
-    };
-    let pacman: Vec<String> = if let Some(s) = exec("pacman", ["-Q"]) {
-        s.lines().skip(5).map(|i| i.to_string()).collect()
-    } else {
-        Vec::new()
-    };
-    Some(Packages { snap, dpkg, pacman })
+    Some(std::fs::read_dir(dir).ok()?.count().saturating_sub(1))
+}
+fn snap() -> Option<usize> {
+    #[cfg(unix)]
+    let dir = std::path::Path::new("/var/lib/snapd/snaps");
+    #[cfg(windows)]
+    let dir = std::path::Path::new(&std::env::var("MSYSTEM_PREFIX").ok()?.to_string())
+        .parent()
+        .unwrap_or(std::path::Path::new("/"))
+        .join("var/lib/snapd/snaps");
+
+    Some(std::fs::read_dir(dir).ok()?.count().saturating_sub(1))
+}
+
+fn scoop() -> Option<usize> {
+    let home_dir = dirs::home_dir()?;
+    let dir = home_dir.join("scoop").join("apps");
+
+    Some(std::fs::read_dir(dir).ok()?.count().saturating_sub(1))
+}
+
+fn dpkg() -> Option<usize> {
+    #[cfg(unix)]
+    let dir = std::path::Path::new("/var/lib/dpkg/status");
+    #[cfg(windows)]
+    let dir = std::path::Path::new(&std::env::var("MSYSTEM_PREFIX").ok()?.to_string())
+        .parent()
+        .unwrap_or(std::path::Path::new("/"))
+        .join("var/lib/dpkg/status");
+
+    Some(std::fs::read_dir(dir).ok()?.count().saturating_sub(1))
+}
+pub async fn get_packages() -> Option<Packages> {
+    tokio::task::spawn_blocking(|| {
+        Some(Packages {
+            snap: snap().unwrap_or_default(),
+            dpkg: dpkg().unwrap_or_default(),
+            pacman: pacman().unwrap_or_default(),
+            scoop: scoop().unwrap_or_default(),
+        })
+    })
+    .await
+    .ok()?
 }

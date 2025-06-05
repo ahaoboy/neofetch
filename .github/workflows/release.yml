@@ -42,9 +42,8 @@ jobs:
           #   os: ubuntu-24.04
           # - target: aarch64-unknown-linux-gnu
           #   os: ubuntu-24.04
-          # - target: aarch64-linux-android
-          #   os: ubuntu-24.04
-
+          - target: aarch64-linux-android
+            os: ubuntu-24.04
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -61,6 +60,10 @@ jobs:
       - name: run
         run: |
           cargo run -q
+      - name: install cross
+        run: |
+          cargo install -q cross --git https://github.com/cross-rs/cross
+          cargo clean
       - uses: taiki-e/upload-rust-binary-action@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:

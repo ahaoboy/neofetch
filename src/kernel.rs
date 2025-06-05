@@ -1,24 +1,20 @@
-use crate::share::exec;
-
 #[cfg(windows)]
-pub fn get_kernel() -> Option<String> {
-    let s = exec("wmic", ["os", "get", "Version"]).or(exec(
-        "powershell",
-        [
-            "-c",
-            "Get-CimInstance Win32_OperatingSystem | Select-Object Version",
-        ],
-    ))?;
-    s.trim()
-        .lines()
-        .last()?
-        .replace("Version", "")
-        .trim()
-        .to_string()
-        .into()
+pub async fn get_kernel() -> Option<String> {
+    use crate::share::wmi_query;
+    use serde::Deserialize;
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename = "Win32_OperatingSystem")]
+    struct OperatingSystem {
+        #[serde(rename = "Version")]
+        version: String,
+    }
+    let results: Vec<OperatingSystem> = wmi_query().await?;
+    results.first().map(|i| i.version.clone())
 }
 #[cfg(unix)]
-pub fn get_kernel() -> Option<String> {
-    let s = exec("uname", ["-r"])?;
+pub async fn get_kernel() -> Option<String> {
+    use crate::share::exec_async;
+
+    let s = exec_async("uname", ["-r"]).await?;
     s.trim().to_string().into()
 }
