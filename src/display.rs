@@ -66,6 +66,6 @@ pub async fn get_display() -> Option<Vec<Display>> {
 }
 
 #[cfg(target_os = "android")]
-pub fn get_display() -> Option<Vec<Display>> {
+pub async fn get_display() -> Option<Vec<Display>> {
     None
 }
