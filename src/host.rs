@@ -43,21 +43,20 @@ pub async fn get_host() -> Option<String> {
     if let (Some(name), Some(version)) = tokio::join!(
         exec_async("cat", ["/sys/devices/virtual/dmi/id/board_name"]),
         exec_async("cat", ["/sys/devices/virtual/dmi/id/product_version"]),
-    ) && !name.is_empty()
-        && !version.is_empty()
-    {
-        return format!("{name} {version}").into();
+    ) {
+        if !name.is_empty() && !version.is_empty() {
+            return format!("{name} {version}").into();
+        }
     }
 
     if let (Some(name), Some(version), Some(device)) = tokio::join!(
         exec_async("getprop", ["ro.product.brand"]),
         exec_async("getprop", ["ro.product.model"]),
         exec_async("getprop", ["ro.product.device"]),
-    ) && !name.is_empty()
-        && !version.is_empty()
-        && !device.is_empty()
-    {
-        return format!("{name} {version} ({device})").into();
+    ) {
+        if !name.is_empty() && !version.is_empty() && !device.is_empty() {
+            return format!("{name} {version} ({device})").into();
+        }
     }
     None
 }

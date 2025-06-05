@@ -208,10 +208,10 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
         }
 
-        if let Some(uptime) = self.uptime
-            && uptime.0 > 0
-        {
-            info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+        if let Some(uptime) = self.uptime {
+            if uptime.0 > 0 {
+                info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+            }
         }
         if let Some(packages) = &self.packages {
             let s = packages.to_string();
@@ -256,15 +256,15 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
         }
 
-        if let Some(disks) = &self.disk
-            && !disks.is_empty()
-        {
-            for disk in disks {
-                if disk.total > 0 {
-                    info.push_str(&format!(
-                        "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
-                        disk.name, disk
-                    ));
+        if let Some(disks) = &self.disk {
+            if !disks.is_empty() {
+                for disk in disks {
+                    if disk.total > 0 {
+                        info.push_str(&format!(
+                            "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
+                            disk.name, disk
+                        ));
+                    }
                 }
             }
         }

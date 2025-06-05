@@ -65,17 +65,18 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
 
         for line in s.lines() {
             let cap = reg.captures(line)?;
-            if let (Some(_), Some(a), Some(b)) = (cap.get(1), cap.get(2), cap.get(3))
-                && ["Display", "3D", "VGA"]
+            if let (Some(_), Some(a), Some(b)) = (cap.get(1), cap.get(2), cap.get(3)) {
+                if ["Display", "3D", "VGA"]
                     .into_iter()
                     .any(|i| b.as_str().contains(i))
-            {
-                let gpu = Gpu {
-                    name: a.as_str().to_string(),
-                    version: b.as_str().to_string(),
-                    ram: 0,
-                };
-                return Some(vec![gpu]);
+                {
+                    let gpu = Gpu {
+                        name: a.as_str().to_string(),
+                        version: b.as_str().to_string(),
+                        ram: 0,
+                    };
+                    return Some(vec![gpu]);
+                }
             }
         }
     }

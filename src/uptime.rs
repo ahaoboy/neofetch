@@ -93,21 +93,22 @@ pub async fn get_uptime() -> Option<Time> {
     use crate::share::exec_async;
 
     let mut time: u64 = 0;
-    if let Some(uptime) = exec_async("cat", ["/proc/uptime"]).await
-        && !uptime.is_empty()
-    {
-        let s = uptime.split(' ').next().unwrap_or_default();
-        time = s.parse::<f64>().ok()? as u64;
+    if let Some(uptime) = exec_async("cat", ["/proc/uptime"]).await {
+        if !uptime.is_empty() {
+            let s = uptime.split(' ').next().unwrap_or_default();
+            time = s.parse::<f64>().ok()? as u64;
+        }
     }
 
-    if let Some(uptime) = exec_async("uptime", ["-s"]).await
-        && let (Some(boot), Some(now)) = tokio::join!(
+    if let Some(uptime) = exec_async("uptime", ["-s"]).await {
+        if let (Some(boot), Some(now)) = tokio::join!(
             exec_async("date", ["-d", uptime.as_str(), "+%s"]),
             exec_async("date", ["+%s"]),
-        )
-        && let (Ok(boot), Ok(now)) = (boot.parse::<f64>(), now.parse::<f64>())
-    {
-        time = (now - boot) as u64;
+        ) {
+            if let (Ok(boot), Ok(now)) = (boot.parse::<f64>(), now.parse::<f64>()) {
+                time = (now - boot) as u64;
+            }
+        }
     }
 
     Some(Time(time))
