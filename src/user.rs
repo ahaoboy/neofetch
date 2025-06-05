@@ -17,6 +17,8 @@ pub async fn get_user() -> Option<String> {
 
 #[cfg(unix)]
 pub async fn get_user() -> Option<String> {
+    use crate::share::exec_async;
+
     if let Some(s) = exec_async("id", ["-un"]).await {
         return Some(s);
     }

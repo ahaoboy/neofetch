@@ -14,15 +14,15 @@ impl std::fmt::Display for Display {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut v = vec![];
         if let Some((w, h)) = self.resolution {
-            v.push(format!("{}x{}", w, h));
+            v.push(format!("{w}x{h}"));
         }
 
         if let Some(refresh_rate) = self.refresh_rate {
-            v.push(format!("@ {}Hz", refresh_rate));
+            v.push(format!("@ {refresh_rate}Hz"));
         }
 
         if let Some((w, h)) = self.scale_resolution {
-            v.push(format!("(as {}x{})", w, h));
+            v.push(format!("(as {w}x{h})"));
         }
 
         if let Some(true) = self.external {

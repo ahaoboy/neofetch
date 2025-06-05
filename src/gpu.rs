@@ -10,12 +10,17 @@ pub struct Gpu {
 }
 impl Display for Gpu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!(
-            "{} ({}) @ {}",
-            self.name,
-            human_bytes(self.ram),
-            self.version,
-        ))
+        let mut v = vec![];
+        v.push(self.name.clone());
+        if self.ram > 0 {
+            v.push(format!("({})", human_bytes(self.ram)));
+        }
+
+        if !self.version.is_empty() {
+            v.push(format!("@ ({})", self.version));
+        }
+
+        f.write_str(&v.join(" "))
     }
 }
 
@@ -50,21 +55,27 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
 }
 
 #[cfg(unix)]
-pub fn get_gpu() -> Option<String> {
+pub async fn get_gpu() -> Option<Vec<Gpu>> {
     use regex::Regex;
 
-    if let Some(s) = exec("lspci", ["-mm"]) {
+    use crate::share::exec_async;
+
+    if let Some(s) = exec_async("lspci", ["-mm"]).await {
         let reg = Regex::new("\"(.*?)\" \"(.*?)\" \"(.*?)\"").unwrap();
 
         for line in s.lines() {
             let cap = reg.captures(line)?;
-            if let (Some(_), Some(a), Some(b)) = (cap.get(1), cap.get(2), cap.get(3)) {
-                if ["Display", "3D", "VGA"]
+            if let (Some(_), Some(a), Some(b)) = (cap.get(1), cap.get(2), cap.get(3))
+                && ["Display", "3D", "VGA"]
                     .into_iter()
                     .any(|i| b.as_str().contains(i))
-                {
-                    return Some(a.as_str().to_string() + b.as_str());
-                }
+            {
+                let gpu = Gpu {
+                    name: a.as_str().to_string(),
+                    version: b.as_str().to_string(),
+                    ram: 0,
+                };
+                return Some(vec![gpu]);
             }
         }
     }

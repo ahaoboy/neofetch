@@ -37,12 +37,12 @@ pub fn get_file_name(path: &str) -> Option<String> {
     Some(name.into())
 }
 pub fn get_pid_name(id: u32) -> Option<String> {
-    exec("cat", [format!("/proc/{}/comm", id).as_str()])
+    exec("cat", [format!("/proc/{id}/comm").as_str()])
 }
 pub fn get_ppid(id: u32) -> Option<u32> {
     if let Some(ppid) = exec(
         "grep",
-        ["-i", "-F", "PPid:", format!("/proc/{}/status", id).as_str()],
+        ["-i", "-F", "PPid:", format!("/proc/{id}/status").as_str()],
     ) {
         let ppid = ppid.split(':').next_back()?.trim();
         let ppid: u32 = ppid.parse().ok()?;

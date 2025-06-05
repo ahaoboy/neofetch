@@ -208,19 +208,19 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
         }
 
-        if let Some(uptime) = self.uptime {
-            if uptime.0 > 0 {
-                info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
-            }
+        if let Some(uptime) = self.uptime
+            && uptime.0 > 0
+        {
+            info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
         }
         if let Some(packages) = &self.packages {
             let s = packages.to_string();
             if !s.trim().is_empty() {
-                info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{}\n", s));
+                info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{s}\n"));
             }
         }
         if let Some(shell) = &self.shell {
-            info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{}\n", shell));
+            info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{shell}\n"));
         }
 
         if let Some(displays) = &self.display {
@@ -256,31 +256,28 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
         }
 
-        if let Some(disks) = &self.disk {
-            if !disks.is_empty() {
-                for disk in disks {
-                    if disk.total > 0 {
-                        info.push_str(&format!(
-                            "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
-                            disk.name, disk
-                        ));
-                    }
+        if let Some(disks) = &self.disk
+            && !disks.is_empty()
+        {
+            for disk in disks {
+                if disk.total > 0 {
+                    info.push_str(&format!(
+                        "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
+                        disk.name, disk
+                    ));
                 }
             }
         }
 
         if let Some(cpu) = &self.cpu {
             for i in cpu {
-                info.push_str(&format!(
-                    "{GREEN}{BOLD}CPU: {RESET}{}\n",
-                    i
-                ));
+                info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{i}\n"));
             }
         }
 
         if let Some(gpu) = &self.gpu {
             for i in gpu {
-                info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{}\n", i));
+                info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{i}\n"));
             }
         }
 

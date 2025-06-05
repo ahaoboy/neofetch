@@ -12,8 +12,9 @@ pub async fn get_kernel() -> Option<String> {
     results.first().map(|i| i.version.clone())
 }
 #[cfg(unix)]
+pub async fn get_kernel() -> Option<String> {
+    use crate::share::exec_async;
 
-pub fn get_kernel() -> Option<String> {
-    let s = exec("uname", ["-r"])?;
+    let s = exec_async("uname", ["-r"]).await?;
     s.trim().to_string().into()
 }

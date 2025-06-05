@@ -9,7 +9,17 @@ pub struct Cpu {
 
 impl Display for Cpu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("{} ({}) {:.2} GHz", self.name, self.cores, self.speed as f64 / 1000.))
+        let mut v = vec![];
+
+        v.push(self.name.clone());
+        if self.cores > 0 {
+            v.push(format!("({})", self.cores));
+        }
+        if self.speed > 0 {
+            v.push(format!("{:.2} GHz", self.speed as f64 / 1000.));
+        }
+        let s = v.join(" ");
+        f.write_str(&s)
     }
 }
 
@@ -44,8 +54,10 @@ pub async fn get_cpu() -> Option<Vec<Cpu>> {
 }
 
 #[cfg(unix)]
-pub async fn get_cpu() -> Option<String> {
-    let s = exec_async("cat", ["/proc/cpuinfo"]).await?;
+pub async fn get_cpu() -> Option<Vec<Cpu>> {
+    use std::collections::HashMap;
+
+    let s = tokio::fs::read_to_string("/proc/cpuinfo").await.ok()?;
     let mut cpuinfo = HashMap::new();
     for line in s.lines() {
         let mut line = line.split(':');
@@ -55,19 +67,19 @@ pub async fn get_cpu() -> Option<String> {
         }
     }
 
-    let cpu = cpuinfo.get("model name").or(cpuinfo.get("Hardware"))?;
+    let name = cpuinfo.get("model name").or(cpuinfo.get("Hardware"))?;
 
-    let feq = cpuinfo.get("cpu MHz").map(|s| s.parse::<f64>().ok());
+    let mut cpu = Cpu {
+        name: name.to_string(),
+        cores: 0,
+        speed: 0,
+    };
 
-    if let Some(Some(feq)) = feq {
-        let feq_str = if feq < 1000. {
-            format!("{:.2}MHz", feq)
-        } else {
-            format!("{:.2}GHz", feq / 1000.)
-        };
-
-        return Some(format!("{cpu} @ {feq_str}"));
+    if let Some(Some(n)) = cpuinfo.get("cpu MHz").map(|s| s.parse::<f64>().ok()) {
+        cpu.speed = n as u32;
     }
-
-    Some(cpu.to_string())
+    if let Some(Some(n)) = cpuinfo.get("cpu cores").map(|s| s.parse::<f64>().ok()) {
+        cpu.cores = n as u32;
+    }
+    Some(vec![cpu])
 }

@@ -12,7 +12,7 @@ authors = ["ahaoboy"]
 human_bytes = "0.4"
 regex = "1"
 ansi-width = "0.1"
-which-shell = { version = "0.1", git = "https://github.com/ahaoboy/which-shell", branch = "perf"  }
+which-shell = { version = "0.1", git = "https://github.com/ahaoboy/which-shell" }
 tokio = { version = "1", features = ["full"] }
 dirs = "6"
 
@@ -25,9 +25,9 @@ serde = { version = "1.0", features = ["derive"] }
 chrono = "0.4"
 winreg = "0.55"
 windows = { version = "0.61", features = [
-    "Win32_System_Diagnostics_ToolHelp",
-    "Win32_System_Threading",
-    "Win32_Foundation",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_Threading",
+  "Win32_Foundation",
 ] }
 
 # The profile that 'cargo dist' will build with

@@ -566,26 +566,29 @@ pub async fn get_os() -> Option<OS> {
 }
 
 #[cfg(unix)]
+pub async fn get_os() -> Option<OS> {
+    use crate::share::exec_async;
 
-pub fn get_os() -> Option<OS> {
-    if let (Some(dis), Some(arch)) = (exec("uname", ["-o"]), exec("uname", ["-m"])) {
+    if let (Some(dis), Some(arch)) =
+        tokio::join!(exec_async("uname", ["-o"]), exec_async("uname", ["-m"]))
+    {
         match dis.as_str() {
             "Android" => {
-                let version = exec("getprop", ["ro.build.version.release"])?;
+                let version = exec_async("getprop", ["ro.build.version.release"]).await?;
                 return Some(OS {
                     distro: Distro::Android,
                     arch,
-                    version,
+                    name: format!("Android {version}"),
                 });
             }
             "Linux" | "GNU/Linux" => {
-                if let Some(output) = exec("lsb_release", ["-d"]) {
-                    let name = output.split(':').last()?.trim();
+                if let Some(output) = exec_async("lsb_release", ["-d"]).await {
+                    let name = output.split(':').next_back()?.trim();
                     if name.starts_with("Ubuntu") {
                         return Some(OS {
                             distro: Distro::Ubuntu,
                             arch,
-                            version: name[7..].into(),
+                            name: format!("Ubuntu {}", &name[7..]),
                         });
                     }
                 }
@@ -593,14 +596,14 @@ pub fn get_os() -> Option<OS> {
                 return Some(OS {
                     distro: Distro::Linux,
                     arch,
-                    version: "".into(),
+                    name: "Linux".into(),
                 });
             }
             "Darwin" => {
                 return Some(OS {
                     distro: Distro::Darwin,
                     arch,
-                    version: "".into(),
+                    name: "Darwin".into(),
                 });
             }
             _ => {}

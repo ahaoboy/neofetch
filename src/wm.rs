@@ -1,3 +1,4 @@
+#[cfg(windows)]
 pub async fn get_wm() -> Option<String> {
     tokio::task::spawn_blocking(|| {
         use windows::Win32::{
@@ -44,6 +45,12 @@ pub async fn get_wm() -> Option<String> {
     .ok()?
 }
 
+#[cfg(not(windows))]
+pub async fn get_wm() -> Option<String> {
+    None
+}
+
+#[cfg(windows)]
 pub async fn get_wm_theme() -> Option<String> {
     tokio::task::spawn_blocking(|| {
         use crate::share::get_file_name;
@@ -64,4 +71,9 @@ pub async fn get_wm_theme() -> Option<String> {
     })
     .await
     .ok()?
+}
+
+#[cfg(not(windows))]
+pub async fn get_wm_theme() -> Option<String> {
+    None
 }
