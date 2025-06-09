@@ -76,7 +76,7 @@ pub fn get_property(property: &str) -> Option<String> {
         .ok()?;
     let mut buffer = [0i8; 92];
 
-    let result = unsafe { __system_property_get(prop_cstr.as_ptr(), buffer.as_mut_ptr()) };
+    let result = unsafe { __system_property_get(prop_cstr.as_ptr() as *mut u8, buffer.as_mut_ptr() as *mut u8) };
 
     if result != 0 {
         return None;
