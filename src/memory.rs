@@ -8,11 +8,11 @@ pub async fn get_memory() -> Option<String> {
     let total_header = "MemTotal:";
     let free_header = "MemFree:";
     for line in s.lines() {
-        if line.starts_with(total_header) {
-            total = line[total_header.len()..].trim().split(" ").next();
+        if let Some(line) = line.strip_prefix(total_header) {
+            total = line.trim().split(" ").next();
         }
-        if line.starts_with(free_header) {
-            free = line[free_header.len()..].trim().split(" ").next();
+           if let Some(line) = line.strip_prefix(free_header) {
+            free = line.trim().split(" ").next();
         }
     }
     let total = total?.trim().split(' ').next()?;

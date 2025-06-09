@@ -55,8 +55,9 @@ fn get_filesystem_info(path: &str) -> Option<Disk> {
     use std::ffi::CString;
     use std::io;
 
-    let path_cstr =
-        CString::new(path).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e)).ok()?;
+    let path_cstr = CString::new(path)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))
+        .ok()?;
 
     let mut stat: libc::statvfs = unsafe { std::mem::zeroed() };
     let result = unsafe { libc::statvfs(path_cstr.as_ptr(), &mut stat) };
@@ -65,8 +66,8 @@ fn get_filesystem_info(path: &str) -> Option<Disk> {
         return None;
     }
 
-    let total = (stat.f_blocks * stat.f_frsize) as u64;
-    let available = (stat.f_bavail * stat.f_frsize) as u64;
+    let total = stat.f_blocks as u64 * stat.f_frsize as u64;
+    let available = stat.f_bavail as u64 * stat.f_frsize as u64;
 
     Some(Disk {
         name: path.to_string(),
