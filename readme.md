@@ -37,3 +37,19 @@ neofetch
 		<img src="assets/android.svg">
 	</a>
 </div>
+
+## perf
+
+```bash
+hyperfine --style=full --shell=fish 'neofetch' 'fastfetch' 'neofetch-shell'
+```
+
+### ubuntu
+<div align="center">
+  <img src="assets/-ubuntu.svg">
+</div>
+
+### windows
+<div align="center">
+  <img src="assets/perf-windows.svg">
+</div>
