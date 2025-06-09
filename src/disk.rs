@@ -44,11 +44,11 @@ pub async fn get_disk() -> Option<Vec<Disk>> {
     Some(v)
 }
 
-#[cfg(target_os = "android")]
-const DISK_SKIP: [&str; 2] = ["overlay", "/dev/block"];
+// #[cfg(target_os = "android")]
+// const DISK_SKIP: [&str; 2] = ["overlay", "/dev/block"];
 
-#[cfg(target_os = "macos")]
-const DISK_SKIP: [&str; 1] = ["devfs"];
+// #[cfg(target_os = "macos")]
+// const DISK_SKIP: [&str; 1] = ["devfs"];
 
 #[cfg(unix)]
 fn get_filesystem_info(path: &str) -> Option<Disk> {

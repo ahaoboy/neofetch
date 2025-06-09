@@ -95,7 +95,7 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
     let (vendor_names, device_names) = load_pci_ids();
 
     let mut v = vec![];
-    for entry in std::fs::read_dir(path).unwrap() {
+    for entry in std::fs::read_dir(path).ok()? {
         let entry = entry.unwrap();
         let device_path = entry.path();
 

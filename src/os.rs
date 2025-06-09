@@ -565,12 +565,6 @@ pub async fn get_os() -> Option<OS> {
     None
 }
 
-#[cfg(target_os = "android")]
-unsafe extern "C" {
-    // Android 属性系统的 C 函数
-    fn __system_property_get(name: *const u8, value: *mut i8) -> i32;
-}
-
 #[cfg(unix)]
 pub async fn get_os() -> Option<OS> {
     use std::ffi::CStr;
@@ -584,13 +578,14 @@ pub async fn get_os() -> Option<OS> {
     let arch = unsafe { CStr::from_ptr(uts.machine.as_ptr()) }
         .to_string_lossy()
         .into_owned();
-    let sysname = unsafe { CStr::from_ptr(uts.sysname.as_ptr()) }
-        .to_string_lossy()
-        .into_owned();
+    // let sysname = unsafe { CStr::from_ptr(uts.sysname.as_ptr()) }
+    //     .to_string_lossy()
+    //     .into_owned();
+    let sysname  = std::env::consts::OS.to_string();
 
-    match sysname.as_str() {
+    match sysname.to_lowercase().as_str() {
         #[cfg(target_os = "android")]
-        "Android" => {
+        "android" => {
             if let Some(version) = crate::share::get_property("ro.build.version.release") {
                 return Some(OS {
                     distro: Distro::Android,
@@ -604,7 +599,7 @@ pub async fn get_os() -> Option<OS> {
                 name: format!("Android"),
             });
         }
-        "Linux" | "GNU/Linux" => {
+        "linux" | "gnu/linux" => {
             if let Ok(lsb) = std::fs::read_to_string("/etc/os-release") {
                 for line in lsb.lines() {
                     if line.starts_with("PRETTY_NAME=\"Ubuntu") {
@@ -622,7 +617,7 @@ pub async fn get_os() -> Option<OS> {
                 name: "Linux".into(),
             });
         }
-        "Darwin" => {
+        "darwin" => {
             return Some(OS {
                 distro: Distro::Darwin,
                 arch,

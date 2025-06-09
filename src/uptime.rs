@@ -88,7 +88,7 @@ pub async fn get_uptime() -> Option<Time> {
     Some(Time(uptime_seconds))
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 pub async fn get_uptime() -> Option<Time> {
     let mut info: libc::sysinfo = unsafe { std::mem::zeroed() };
     let result = unsafe { libc::sysinfo(&mut info) };

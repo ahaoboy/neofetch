@@ -31,8 +31,8 @@ pub async fn get_user() -> Option<String> {
             .into_owned()
     };
 
-    if username.is_empty() {
-        return None;
+      if !username.is_empty() {
+        return Some(username);
     }
     if let Ok(s) = std::env::var("username") {
         return Some(s);
@@ -43,5 +43,5 @@ pub async fn get_user() -> Option<String> {
         let name = name.split('/').next_back()?;
         return Some(name.into());
     }
-    Some(username)
+    None
 }

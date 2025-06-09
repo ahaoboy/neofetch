@@ -18,14 +18,14 @@ pub async fn get_hostname() -> Option<String> {
     use std::ffi::CStr;
     let mut buffer = vec![0u8; 256];
 
-    let result = unsafe { libc::gethostname(buffer.as_mut_ptr() as *mut i8, buffer.len()) };
+    let result = unsafe { libc::gethostname(buffer.as_mut_ptr() as *mut std::ffi::c_char, buffer.len()) };
 
     if result != 0 {
         return None;
     }
 
     let hostname = unsafe {
-        CStr::from_ptr(buffer.as_ptr() as *const i8)
+        CStr::from_ptr(buffer.as_ptr() as *const std::ffi::c_char)
             .to_string_lossy()
             .into_owned()
     };

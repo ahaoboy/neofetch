@@ -62,6 +62,11 @@ pub async fn wmi_query<T: serde::de::DeserializeOwned>() -> Option<Vec<T>> {
 }
 
 #[cfg(target_os = "android")]
+unsafe extern "C" {
+    fn __system_property_get(name: *const std::ffi::c_char, value: *mut std::ffi::c_char) -> i32;
+}
+
+#[cfg(target_os = "android")]
 pub fn get_property(property: &str) -> Option<String> {
     use std::ffi::{CStr, CString};
     use std::io;
@@ -87,5 +92,5 @@ pub fn get_property(property: &str) -> Option<String> {
         return None;
     }
 
-    Ok(value)
+    Some(value)
 }
