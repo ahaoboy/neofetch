@@ -65,8 +65,8 @@ fn get_filesystem_info(path: &str) -> Option<Disk> {
         return None;
     }
 
-    let total = stat.f_blocks * stat.f_frsize;
-    let available = stat.f_bavail * stat.f_frsize;
+    let total = (stat.f_blocks * stat.f_frsize) as u64;
+    let available = (stat.f_bavail * stat.f_frsize) as u64;
 
     Some(Disk {
         name: path.to_string(),
