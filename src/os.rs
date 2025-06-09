@@ -581,7 +581,7 @@ pub async fn get_os() -> Option<OS> {
     // let sysname = unsafe { CStr::from_ptr(uts.sysname.as_ptr()) }
     //     .to_string_lossy()
     //     .into_owned();
-    let sysname  = std::env::consts::OS.to_string();
+    let sysname = std::env::consts::OS.to_string();
 
     match sysname.to_lowercase().as_str() {
         #[cfg(target_os = "android")]
@@ -617,7 +617,7 @@ pub async fn get_os() -> Option<OS> {
                 name: "Linux".into(),
             });
         }
-        "darwin" => {
+        "darwin" | "macos" | "ios" => {
             return Some(OS {
                 distro: Distro::Darwin,
                 arch,
