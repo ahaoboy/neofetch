@@ -40,6 +40,12 @@ neofetch
 
 ## perf
 
+https://github.com/dylanaraps/neofetch
+
+
+https://github.com/fastfetch-cli/fastfetch
+
+
 ```bash
 hyperfine --style=full --shell=fish 'neofetch' 'fastfetch' 'neofetch-shell'
 ```
@@ -49,9 +55,12 @@ hyperfine --style=full --shell=fish 'neofetch' 'fastfetch' 'neofetch-shell'
   <img src="assets/perf-windows.svg">
 </div>
 
-
 ### ubuntu
 <div align="center">
   <img src="assets/perf-ubuntu.svg">
 </div>
 
+### android
+<div align="center">
+  <img src="assets/perf-android.svg">
+</div>
