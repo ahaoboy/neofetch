@@ -63,7 +63,7 @@ pub async fn wmi_query<T: serde::de::DeserializeOwned>() -> Option<Vec<T>> {
 
 #[cfg(target_os = "android")]
 unsafe extern "C" {
-    fn __system_property_get(name: *const std::ffi::c_char, value: *mut std::ffi::c_char) -> i32;
+    fn __system_property_get(name: *const libc::c_char, value: *mut libc::c_char) -> i32;
 }
 
 #[cfg(target_os = "android")]
