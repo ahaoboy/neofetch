@@ -1,0 +1,16 @@
+[1mBenchmark [0m[1m1[0m: neofetch
+  Time ([1;32mmean[0m ± [32mσ[0m):     [1;32m109.6 ms[0m ± [32m 14.8 ms[0m    [User: [34m26.0 ms[0m, System: [34m110.3 ms[0m]
+  Range ([36mmin[0m … [35mmax[0m):   [36m 93.1 ms[0m … [35m143.5 ms[0m    [2m10 runs[0m
+ 
+[1mBenchmark [0m[1m2[0m: fastfetch
+  Time ([1;32mmean[0m ± [32mσ[0m):     [1;32m127.6 ms[0m ± [32m 14.6 ms[0m    [User: [34m42.6 ms[0m, System: [34m75.9 ms[0m]
+  Range ([36mmin[0m … [35mmax[0m):   [36m105.4 ms[0m … [35m144.7 ms[0m    [2m10 runs[0m
+ 
+[1mBenchmark [0m[1m3[0m: neofetch-shell
+  Time ([1;32mmean[0m ± [32mσ[0m):     [1;32m 1.938 s[0m ± [32m 0.089 s[0m    [User: [34m0.495 s[0m, System: [34m1.181 s[0m]
+  Range ([36mmin[0m … [35mmax[0m):   [36m 1.799 s[0m … [35m 2.089 s[0m    [2m10 runs[0m
+ 
+[1mSummary[0m
+  [36mneofetch[0m ran
+[1;32m    1.16[0m ± [32m0.21[0m times faster than [35mfastfetch[0m
+[1;32m   17.68[0m ± [32m2.52[0m times faster than [35mneofetch-shell[0m

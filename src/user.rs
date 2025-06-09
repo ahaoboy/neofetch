@@ -17,12 +17,23 @@ pub async fn get_user() -> Option<String> {
 
 #[cfg(unix)]
 pub async fn get_user() -> Option<String> {
-    use crate::share::exec_async;
+    use std::ffi::CStr;
+    let uid = unsafe { libc::getuid() };
 
-    if let Some(s) = exec_async("id", ["-un"]).await {
-        return Some(s);
+    let passwd = unsafe { libc::getpwuid(uid) };
+    if passwd.is_null() {
+        return None;
     }
 
+    let username = unsafe {
+        CStr::from_ptr((*passwd).pw_name)
+            .to_string_lossy()
+            .into_owned()
+    };
+
+      if !username.is_empty() {
+        return Some(username);
+    }
     if let Ok(s) = std::env::var("username") {
         return Some(s);
     }
@@ -32,5 +43,5 @@ pub async fn get_user() -> Option<String> {
         let name = name.split('/').next_back()?;
         return Some(name.into());
     }
-    Some("".into())
+    None
 }

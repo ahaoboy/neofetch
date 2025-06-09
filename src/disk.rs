@@ -44,40 +44,40 @@ pub async fn get_disk() -> Option<Vec<Disk>> {
     Some(v)
 }
 
-#[cfg(target_os = "linux")]
-const DISK_SKIP: [&str; 1] = ["tmpfs"];
+// #[cfg(target_os = "android")]
+// const DISK_SKIP: [&str; 2] = ["overlay", "/dev/block"];
 
-#[cfg(target_os = "android")]
-const DISK_SKIP: [&str; 2] = ["overlay", "/dev/block"];
+// #[cfg(target_os = "macos")]
+// const DISK_SKIP: [&str; 1] = ["devfs"];
 
-#[cfg(target_os = "macos")]
-const DISK_SKIP: [&str; 1] = ["devfs"];
+#[cfg(unix)]
+fn get_filesystem_info(path: &str) -> Option<Disk> {
+    use std::ffi::CString;
+    use std::io;
+
+    let path_cstr = CString::new(path)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))
+        .ok()?;
+
+    let mut stat: libc::statvfs = unsafe { std::mem::zeroed() };
+    let result = unsafe { libc::statvfs(path_cstr.as_ptr(), &mut stat) };
+
+    if result != 0 {
+        return None;
+    }
+
+    let total = stat.f_blocks as u64 * stat.f_frsize as u64;
+    let available = stat.f_bavail as u64 * stat.f_frsize as u64;
+
+    Some(Disk {
+        name: path.to_string(),
+        total,
+        used: total - available,
+    })
+}
 
 #[cfg(unix)]
 pub async fn get_disk() -> Option<Vec<Disk>> {
-    use regex::Regex;
-
-    use crate::share::exec_async;
-    let s = exec_async("df", []).await?;
-
-    let mut v = vec![];
-    let re = Regex::new(r"([a-zA-Z0-9]+):?\s+([0-9]+)\s+([0-9]+)\s+([0-9]+).*?").ok()?;
-    for line in s.lines().skip(1) {
-        let cap = re.captures(line.trim())?;
-        let name = cap.get(1).unwrap().as_str().to_string();
-
-        if DISK_SKIP.iter().any(|i| line.starts_with(i)) {
-            continue;
-        }
-
-        if let (Ok(total), Ok(used)) = (
-            cap.get(2).unwrap().as_str().parse::<u64>(),
-            cap.get(3).unwrap().as_str().parse::<u64>(),
-        ) {
-            let total = total * 1024;
-            let used = used * 1024;
-            v.push(Disk { name, used, total })
-        }
-    }
+    let v = vec![get_filesystem_info("/")?];
     Some(v)
 }

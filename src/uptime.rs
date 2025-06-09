@@ -88,28 +88,41 @@ pub async fn get_uptime() -> Option<Time> {
     Some(Time(uptime_seconds))
 }
 
-#[cfg(unix)]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 pub async fn get_uptime() -> Option<Time> {
-    use crate::share::exec_async;
+    let mut info: libc::sysinfo = unsafe { std::mem::zeroed() };
+    let result = unsafe { libc::sysinfo(&mut info) };
+    if result != 0 {
+        return None;
+    }
+    Some(Time(info.uptime as u64))
+}
 
-    let mut time: u64 = 0;
-    if let Some(uptime) = exec_async("cat", ["/proc/uptime"]).await {
-        if !uptime.is_empty() {
-            let s = uptime.split(' ').next().unwrap_or_default();
-            time = s.parse::<f64>().ok()? as u64;
-        }
+#[cfg(target_os = "macos")]
+pub async fn get_uptime() -> Option<Time> {
+    let mut mib = [libc::CTL_KERN as i32, libc::KERN_BOOTTIME as i32];
+    let mut boot_time: libc::timeval = unsafe { std::mem::zeroed() };
+    let mut size = std::mem::size_of::<libc::timeval>();
+
+    let result = unsafe {
+        libc::sysctl(
+            mib.as_mut_ptr(),
+            2,
+            &mut boot_time as *mut _ as *mut _,
+            &mut size,
+            std::ptr::null_mut(),
+            0,
+        )
+    };
+    if result != 0 {
+        return None;
     }
 
-    if let Some(uptime) = exec_async("uptime", ["-s"]).await {
-        if let (Some(boot), Some(now)) = tokio::join!(
-            exec_async("date", ["-d", uptime.as_str(), "+%s"]),
-            exec_async("date", ["+%s"]),
-        ) {
-            if let (Ok(boot), Ok(now)) = (boot.parse::<f64>(), now.parse::<f64>()) {
-                time = (now - boot) as u64;
-            }
-        }
-    }
+    // 获取当前时间
+    let mut current_time = unsafe { std::mem::zeroed() };
+    unsafe { libc::gettimeofday(&mut current_time, std::ptr::null_mut()) };
 
-    Some(Time(time))
+    // 计算运行时间（秒）
+    let uptime = current_time.tv_sec - boot_time.tv_sec;
+    Some(Time(uptime as u64))
 }

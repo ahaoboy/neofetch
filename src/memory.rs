@@ -1,24 +1,26 @@
 #[cfg(not(windows))]
 pub async fn get_memory() -> Option<String> {
-    let total = exec_async(
-        "awk",
-        ["-F", ":", "/MemTotal/ {printf $2; exit}", "/proc/meminfo"],
-    )
-    .await?;
+    let s = std::fs::read_to_string("/proc/meminfo").ok()?;
 
-    let total = total.trim().split(' ').next()?;
+    let mut total = Some("");
+    let mut free = Some("");
+
+    let total_header = "MemTotal:";
+    let free_header = "MemFree:";
+    for line in s.lines() {
+        if let Some(line) = line.strip_prefix(total_header) {
+            total = line.trim().split(" ").next();
+        }
+           if let Some(line) = line.strip_prefix(free_header) {
+            free = line.trim().split(" ").next();
+        }
+    }
+    let total = total?.trim().split(' ').next()?;
     let total: f64 = total.parse().ok()?;
 
-    let free = exec_async(
-        "awk",
-        ["-F", ":", "/MemFree/ {printf $2; exit}", "/proc/meminfo"],
-    )
-    .await?;
-    let free = free.trim().split(' ').next()?;
+    let free = free?.trim().split(' ').next()?;
     let free: f64 = free.parse().ok()?;
     use human_bytes::human_bytes;
-
-    use crate::share::exec_async;
 
     Some(format!(
         "{} / {}",

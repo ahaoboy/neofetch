@@ -66,8 +66,14 @@ fn dpkg() -> Option<usize> {
         .parent()
         .unwrap_or(std::path::Path::new("/"))
         .join("var/lib/dpkg/status");
-
-    Some(std::fs::read_dir(dir).ok()?.count().saturating_sub(1))
+    let file = std::fs::read_to_string(dir).ok()?;
+    let mut package_count = 0;
+    for line in file.lines() {
+        if line.starts_with("Package:") {
+            package_count += 1;
+        }
+    }
+    Some(package_count)
 }
 pub async fn get_packages() -> Option<Packages> {
     tokio::task::spawn_blocking(|| {

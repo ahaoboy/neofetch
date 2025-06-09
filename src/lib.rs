@@ -118,7 +118,6 @@ impl Neofetch {
             uptime,
             packages,
             display,
-            de,
             wm,
             wm_theme,
             terminal,
@@ -139,7 +138,6 @@ impl Neofetch {
             get_uptime(),
             get_packages(),
             get_display(),
-            get_de(),
             get_wm(),
             get_wm_theme(),
             get_terminal(),
@@ -150,6 +148,7 @@ impl Neofetch {
             get_battery(),
             get_hostname()
         );
+        let de = os.clone().and_then(get_de);
 
         Neofetch {
             os,
