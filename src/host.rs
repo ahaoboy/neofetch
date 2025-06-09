@@ -14,48 +14,33 @@ pub async fn get_host() -> Option<String> {
     results.first().map(|i| i.manufacturer.clone())
 }
 
-#[cfg(windows)]
+#[cfg(not(target_os = "android"))]
 pub async fn get_rom() -> Option<String> {
     None
 }
 
-#[cfg(windows)]
+#[cfg(not(target_os = "android"))]
 pub async fn get_baseband() -> Option<String> {
     None
 }
-
-#[cfg(unix)]
+#[cfg(target_os = "android")]
 pub async fn get_rom() -> Option<String> {
-    use crate::share::exec_async;
-
-    exec_async("getprop", ["ro.build.display.id"]).await
+    crate::share::get_property("ro.build.display.id")
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "android")]
 pub async fn get_baseband() -> Option<String> {
-    use crate::share::exec_async;
-    exec_async("getprop", ["ro.baseband"]).await
+    crate::share::get_property("ro.baseband")
 }
 
 #[cfg(unix)]
 pub async fn get_host() -> Option<String> {
-    use crate::share::exec_async;
-    if let (Some(name), Some(version)) = tokio::join!(
-        exec_async("cat", ["/sys/devices/virtual/dmi/id/board_name"]),
-        exec_async("cat", ["/sys/devices/virtual/dmi/id/product_version"]),
+    if let (Ok(name), Ok(version)) = (
+        std::fs::read_to_string("/sys/devices/virtual/dmi/id/board_name"),
+        std::fs::read_to_string("/sys/devices/virtual/dmi/id/product_version"),
     ) {
         if !name.is_empty() && !version.is_empty() {
-            return format!("{name} {version}").into();
-        }
-    }
-
-    if let (Some(name), Some(version), Some(device)) = tokio::join!(
-        exec_async("getprop", ["ro.product.brand"]),
-        exec_async("getprop", ["ro.product.model"]),
-        exec_async("getprop", ["ro.product.device"]),
-    ) {
-        if !name.is_empty() && !version.is_empty() && !device.is_empty() {
-            return format!("{name} {version} ({device})").into();
+            return format!("{} {}", name.trim(), version.trim()).into();
         }
     }
     None

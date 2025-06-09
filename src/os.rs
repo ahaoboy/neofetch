@@ -565,60 +565,72 @@ pub async fn get_os() -> Option<OS> {
     None
 }
 
+#[cfg(target_os = "android")]
+unsafe extern "C" {
+    // Android 属性系统的 C 函数
+    fn __system_property_get(name: *const u8, value: *mut i8) -> i32;
+}
+
 #[cfg(unix)]
 pub async fn get_os() -> Option<OS> {
-    use crate::share::exec_async;
+    use std::ffi::CStr;
+    let mut uts: libc::utsname = unsafe { std::mem::zeroed() };
 
-    if let (Some(dis), Some(arch)) =
-        tokio::join!(exec_async("uname", ["-o"]), exec_async("uname", ["-m"]))
-    {
-        match dis.as_str() {
-            "Android" => {
-                let version = exec_async("getprop", ["ro.build.version.release"]).await?;
+    let result = unsafe { libc::uname(&mut uts) };
+    if result != 0 {
+        return None;
+    }
+
+    let arch = unsafe { CStr::from_ptr(uts.machine.as_ptr()) }
+        .to_string_lossy()
+        .into_owned();
+    let sysname = unsafe { CStr::from_ptr(uts.sysname.as_ptr()) }
+        .to_string_lossy()
+        .into_owned();
+
+    match sysname.as_str() {
+        #[cfg(target_os = "android")]
+        "Android" => {
+            if let Some(version) = crate::share::get_property("ro.build.version.release") {
                 return Some(OS {
                     distro: Distro::Android,
                     arch,
                     name: format!("Android {version}"),
                 });
             }
-            "Linux" | "GNU/Linux" => {
-                if let Some(output) = exec_async("lsb_release", ["-d"]).await {
-                    let name = output.split(':').next_back()?.trim();
-                    if name.starts_with("Ubuntu") {
+            return Some(OS {
+                distro: Distro::Android,
+                arch,
+                name: format!("Android"),
+            });
+        }
+        "Linux" | "GNU/Linux" => {
+            if let Ok(lsb) = std::fs::read_to_string("/etc/os-release") {
+                for line in lsb.lines() {
+                    if line.starts_with("PRETTY_NAME=\"Ubuntu") {
                         return Some(OS {
                             distro: Distro::Ubuntu,
                             arch,
-                            name: format!("Ubuntu {}", &name[7..]),
+                            name: line[13..line.len() - 1].to_string(),
                         });
                     }
                 }
-
-                return Some(OS {
-                    distro: Distro::Linux,
-                    arch,
-                    name: "Linux".into(),
-                });
             }
-            "Darwin" => {
-                return Some(OS {
-                    distro: Distro::Darwin,
-                    arch,
-                    name: "Darwin".into(),
-                });
-            }
-            _ => {}
+            return Some(OS {
+                distro: Distro::Linux,
+                arch,
+                name: "Linux".into(),
+            });
         }
+        "Darwin" => {
+            return Some(OS {
+                distro: Distro::Darwin,
+                arch,
+                name: "Darwin".into(),
+            });
+        }
+        _ => {}
     }
-
-    // let s = exec("lsb_release", ["-a"])?;
-    // let s = s.trim().lines().last()?.trim();
-    // if s.starts_with("Microsoft Windows 11") {
-    //     return Some(OS {
-    //         distro: Distro::Windows,
-    //         version: "11".into(),
-    //         arch: "x86_64".into(),
-    //     });
-    // }
 
     None
 }

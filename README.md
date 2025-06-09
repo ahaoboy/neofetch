@@ -46,7 +46,7 @@ hyperfine --style=full --shell=fish 'neofetch' 'fastfetch' 'neofetch-shell'
 
 ### ubuntu
 <div align="center">
-  <img src="assets/-ubuntu.svg">
+  <img src="assets/perf-ubuntu.svg">
 </div>
 
 ### windows

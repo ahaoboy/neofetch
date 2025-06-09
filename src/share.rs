@@ -37,8 +37,9 @@ pub fn get_file_name(path: &str) -> Option<String> {
     Some(name.into())
 }
 pub fn get_pid_name(id: u32) -> Option<String> {
-    exec("cat", [format!("/proc/{id}/comm").as_str()])
+    std::fs::read_to_string(format!("/proc/{id}/comm").as_str()).ok()
 }
+
 pub fn get_ppid(id: u32) -> Option<u32> {
     if let Some(ppid) = exec(
         "grep",
@@ -58,4 +59,33 @@ pub async fn wmi_query<T: serde::de::DeserializeOwned>() -> Option<Vec<T>> {
     let wmi_con = WMIConnection::new(com).ok()?;
     let results: Vec<T> = wmi_con.async_query().await.ok()?;
     Some(results)
+}
+
+#[cfg(target_os = "android")]
+pub fn get_property(property: &str) -> Option<String> {
+    use std::ffi::{CStr, CString};
+    use std::io;
+
+    let prop_cstr = CString::new(property)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))
+        .ok()?;
+    let mut buffer = [0i8; 92];
+
+    let result = unsafe { __system_property_get(prop_cstr.as_ptr(), buffer.as_mut_ptr()) };
+
+    if result != 0 {
+        return None;
+    }
+
+    let value = unsafe {
+        CStr::from_ptr(buffer.as_ptr() as *const u8)
+            .to_string_lossy()
+            .into_owned()
+    };
+
+    if value.is_empty() {
+        return None;
+    }
+
+    Ok(value)
 }

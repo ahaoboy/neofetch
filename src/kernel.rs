@@ -13,8 +13,16 @@ pub async fn get_kernel() -> Option<String> {
 }
 #[cfg(unix)]
 pub async fn get_kernel() -> Option<String> {
-    use crate::share::exec_async;
+    use std::ffi::CStr;
+    let mut uts: libc::utsname = unsafe { std::mem::zeroed() };
 
-    let s = exec_async("uname", ["-r"]).await?;
-    s.trim().to_string().into()
+    let result = unsafe { libc::uname(&mut uts) };
+    if result != 0 {
+        return None;
+    }
+    let release = unsafe { CStr::from_ptr(uts.release.as_ptr()) }
+        .to_string_lossy()
+        .into_owned();
+
+    Some(release)
 }
