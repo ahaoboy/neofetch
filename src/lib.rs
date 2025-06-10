@@ -20,6 +20,7 @@ pub mod terminal;
 pub mod uptime;
 pub mod user;
 pub mod wm;
+pub mod mappings;
 use cpu::Cpu;
 use disk::Disk;
 use gpu::Gpu;
