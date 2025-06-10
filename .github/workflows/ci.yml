@@ -31,10 +31,11 @@ jobs:
         run: |
           npm i ansi2 -g
           cargo run -q
-          cargo run -q | ansi2 > neofetch.svg
+          cargo run -q > neofetch-${{ matrix.os }}.ans
+          cargo run -q | ansi2 > neofetch-${{ matrix.os }}.svg
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
-          path: ./*.svg
+          path: "./*.svg,./*.ans"

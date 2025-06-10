@@ -45,7 +45,7 @@ pub async fn get_cpu() -> Option<Vec<Cpu>> {
         results
             .iter()
             .map(|i| Cpu {
-                name: i.name.clone(),
+                name: i.name.trim().to_owned(),
                 cores: i.number_of_cores,
                 speed: i.current_clock_speed,
             })
