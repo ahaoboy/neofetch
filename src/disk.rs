@@ -41,6 +41,7 @@ pub async fn get_disk() -> Option<Vec<Disk>> {
             used: i.size - i.free_space,
         })
     }
+    v.sort_by(|a, b| a.name.cmp(&b.name));
     Some(v)
 }
 

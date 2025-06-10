@@ -9,7 +9,18 @@ pub async fn get_kernel() -> Option<String> {
         version: String,
     }
     let results: Vec<OperatingSystem> = wmi_query().await?;
-    results.first().map(|i| i.version.clone())
+    let os = results.first()?.version.clone();
+    let mut v = vec![os];
+    use winreg::RegKey;
+    use winreg::enums::*;
+    if let Ok(subkey) = RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion")
+        .and_then(|op| op.get_value::<String, _>("DisplayVersion"))
+    {
+        v.push(format!("({subkey})"));
+    }
+
+    Some(v.join(" "))
 }
 #[cfg(unix)]
 pub async fn get_kernel() -> Option<String> {
