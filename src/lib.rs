@@ -8,6 +8,7 @@ pub mod gpu;
 pub mod host;
 pub mod hostname;
 pub mod icon;
+pub mod ip;
 pub mod kernel;
 pub mod locale;
 pub mod memory;
@@ -106,6 +107,7 @@ pub struct Neofetch {
     pub memory: Option<String>,
     pub battery: Option<u32>,
     pub locale: Option<String>,
+    pub ip: Option<String>,
 }
 
 impl Neofetch {
@@ -154,7 +156,7 @@ impl Neofetch {
             get_locale(),
         );
         let de = os.clone().and_then(get_de);
-
+        let ip = ip::get_ip();
         Neofetch {
             os,
             user,
@@ -177,6 +179,7 @@ impl Neofetch {
             battery,
             hostname,
             locale,
+            ip,
         }
     }
 }
@@ -293,6 +296,11 @@ impl std::fmt::Display for Neofetch {
         if let Some(battery) = &self.battery {
             info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
         }
+
+        if let Some(ip) = &self.ip {
+            info.push_str(&format!("{GREEN}{BOLD}Local IP: {RESET}{ip}\n"));
+        }
+
         if let Some(locale) = &self.locale {
             info.push_str(&format!("{GREEN}{BOLD}Locale: {RESET}{locale}\n"));
         }
