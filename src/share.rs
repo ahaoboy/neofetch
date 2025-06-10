@@ -37,7 +37,9 @@ pub fn get_file_name(path: &str) -> Option<String> {
     Some(name.into())
 }
 pub fn get_pid_name(id: u32) -> Option<String> {
-    std::fs::read_to_string(format!("/proc/{id}/comm").as_str()).ok()
+    std::fs::read_to_string(format!("/proc/{id}/comm").as_str())
+        .ok()
+        .map(|i| i.trim().to_string())
 }
 
 pub fn get_ppid(id: u32) -> Option<u32> {

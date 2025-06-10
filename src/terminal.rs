@@ -14,6 +14,7 @@ pub async fn get_terminal() -> Option<String> {
                 "urxvtd" => return Some("urxvtd".into()),
                 "nvim" => return Some("Neovim Terminal".into()),
                 "NeoVimServer" => return Some("VimR Terminal".into()),
+                "node" => return Some("node".into()),
                 "ruby" | "1" | "tmux" | "systemd" | "sshd" | "python" | "USER" | "PID"
                 | "kdeinit" | "launchd" | "bwrap" => break,
                 _ => {}
