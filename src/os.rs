@@ -524,7 +524,7 @@ pub async fn get_os() -> Option<OS> {
     let results: Vec<OperatingSystem> = wmi_query().await?;
     let name = results
         .first()
-        .map(|i| i.caption.clone())?
+        .map(|i| i.caption.trim())?
         .replace("Microsoft ", "");
 
     #[derive(Deserialize, Debug, Clone)]
