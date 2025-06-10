@@ -36,7 +36,7 @@ pub async fn get_disk() -> Option<Vec<Disk>> {
     let mut v = vec![];
     for i in results {
         v.push(Disk {
-            name: i.device_id,
+            name: i.device_id.trim_end_matches(":").to_owned(),
             total: i.size,
             used: i.size - i.free_space,
         })
