@@ -13,7 +13,8 @@ impl Display for Disk {
         let used = human_bytes(self.used as f64);
         let total = human_bytes(self.total as f64);
         let percent = (self.used as f64 / self.total as f64) * 100.;
-        f.write_str(&format!("{used} / {total} ({percent:2.0}%)"))
+        let percent_str = format!("{percent:2.0}%").trim().to_string();
+        f.write_str(&format!("{used} / {total} ({percent_str})"))
     }
 }
 
