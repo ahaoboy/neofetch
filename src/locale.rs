@@ -19,3 +19,11 @@ pub async fn get_locale() -> Option<String> {
 pub async fn get_locale() -> Option<String> {
     crate::share::get_property("persist.sys.locale")
 }
+
+#[cfg(any(target_os = "macos", target_os = "linux",))]
+pub async fn get_locale() -> Option<String> {
+    std::env::var("LC_ALL")
+        .or_else(|_| std::env::var("LC_CTYPE"))
+        .or_else(|_| std::env::var("LANG"))
+        .ok()
+}

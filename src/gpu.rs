@@ -95,8 +95,8 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
     let (vendor_names, device_names) = load_pci_ids();
 
     let mut v = vec![];
-    for entry in tokio::fs::read_dir(path).await.ok()? {
-        let entry = entry.unwrap();
+    let mut dir = tokio::fs::read_dir(path).await.ok()?;
+    while let Some(entry) = dir.next_entry().await.ok()? {
         let device_path = entry.path();
 
         let vendor = tokio::fs::read_to_string(device_path.join("vendor")).await.unwrap_or_default();
