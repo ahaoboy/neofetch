@@ -23,6 +23,7 @@ pub async fn get_rom() -> Option<String> {
 pub async fn get_baseband() -> Option<String> {
     None
 }
+
 #[cfg(target_os = "android")]
 pub async fn get_rom() -> Option<String> {
     crate::share::get_property("ro.build.display.id")
@@ -36,8 +37,8 @@ pub async fn get_baseband() -> Option<String> {
 #[cfg(unix)]
 pub async fn get_host() -> Option<String> {
     if let (Ok(name), Ok(version)) = (
-        std::fs::read_to_string("/sys/devices/virtual/dmi/id/board_name"),
-        std::fs::read_to_string("/sys/devices/virtual/dmi/id/product_version"),
+        tokio::fs::read_to_string("/sys/devices/virtual/dmi/id/board_name").await,
+        tokio::fs::read_to_string("/sys/devices/virtual/dmi/id/product_version").await,
     ) {
         if !name.is_empty() && !version.is_empty() {
             return format!("{} {}", name.trim(), version.trim()).into();

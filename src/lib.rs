@@ -9,6 +9,7 @@ pub mod host;
 pub mod hostname;
 pub mod icon;
 pub mod kernel;
+pub mod locale;
 pub mod memory;
 pub mod os;
 pub mod packages;
@@ -41,6 +42,7 @@ use crate::disk::get_disk;
 use crate::host::get_host;
 use crate::host::{get_baseband, get_rom};
 use crate::kernel::get_kernel;
+use crate::locale::get_locale;
 use crate::memory::get_memory;
 use crate::packages::get_packages;
 use crate::shell::which_shell;
@@ -103,6 +105,7 @@ pub struct Neofetch {
     pub gpu: Option<Vec<Gpu>>,
     pub memory: Option<String>,
     pub battery: Option<u32>,
+    pub locale: Option<String>,
 }
 
 impl Neofetch {
@@ -127,6 +130,7 @@ impl Neofetch {
             memory,
             battery,
             hostname,
+            locale,
         ) = tokio::join!(
             which_shell(),
             get_os(),
@@ -146,7 +150,8 @@ impl Neofetch {
             get_gpu(),
             get_memory(),
             get_battery(),
-            get_hostname()
+            get_hostname(),
+            get_locale(),
         );
         let de = os.clone().and_then(get_de);
 
@@ -171,6 +176,7 @@ impl Neofetch {
             memory,
             battery,
             hostname,
+            locale,
         }
     }
 }
@@ -287,7 +293,9 @@ impl std::fmt::Display for Neofetch {
         if let Some(battery) = &self.battery {
             info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
         }
-
+        if let Some(locale) = &self.locale {
+            info.push_str(&format!("{GREEN}{BOLD}Locale: {RESET}{locale}\n"));
+        }
         let color_str: String = [
             BLACK_BG, RED_BG, GREEN_BG, YELLOW_BG, BLUE_BG, MAGENTA_BG, CYAN_BG, WHITE_BG,
         ]

@@ -1,6 +1,6 @@
 #[cfg(not(windows))]
 pub async fn get_memory() -> Option<String> {
-    let s = std::fs::read_to_string("/proc/meminfo").ok()?;
+    let s = tokio::fs::read_to_string("/proc/meminfo").await.ok()?;
 
     let mut total = Some("");
     let mut free = Some("");

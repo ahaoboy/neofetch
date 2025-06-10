@@ -600,7 +600,7 @@ pub async fn get_os() -> Option<OS> {
             });
         }
         "linux" | "gnu/linux" => {
-            if let Ok(lsb) = std::fs::read_to_string("/etc/os-release") {
+            if let Ok(lsb) = tokio::fs::read_to_string("/etc/os-release").await {
                 for line in lsb.lines() {
                     if line.starts_with("PRETTY_NAME=\"Ubuntu") {
                         return Some(OS {

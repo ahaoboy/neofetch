@@ -53,7 +53,7 @@ pub async fn get_cpu() -> Option<Vec<Cpu>> {
     )
 }
 
-#[cfg(unix)]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 pub async fn get_cpu() -> Option<Vec<Cpu>> {
     use std::collections::HashMap;
 
@@ -80,6 +80,46 @@ pub async fn get_cpu() -> Option<Vec<Cpu>> {
     }
     if let Some(Some(n)) = cpuinfo.get("cpu cores").map(|s| s.parse::<f64>().ok()) {
         cpu.cores = n as u32;
+    }
+    Some(vec![cpu])
+}
+
+#[cfg(target_os = "android")]
+pub async fn get_cpu() -> Option<Vec<Cpu>> {
+    let name = crate::share::get_property("ro.soc.model")?;
+    let mut cpu = Cpu {
+        name: crate::share::detect_cpu(&name)?,
+        cores: 0,
+        speed: 0,
+    };
+
+    if let Ok(s) = tokio::fs::read_to_string("/sys/devices/system/cpu/present").await {
+        if let Some((left, right)) = s.trim().split_once("-") {
+            let left: u32 = left.parse().ok()?;
+            let right: u32 = right.parse().ok()?;
+            cpu.cores = right - left + 1;
+        }
+    }
+
+    if cpu.cores > 0 {
+        let mut sum = 0;
+        let mut count = 0;
+        for i in 0..cpu.cores {
+            if let Ok(s) = tokio::fs::read_to_string(&format!(
+                "/sys/devices/system/cpu/cpu{i}/cpufreq/scaling_cur_freq"
+            ))
+            .await
+            {
+                if let Ok(n) = s.trim().parse::<u32>() {
+                    sum += n;
+                    count += 1;
+                }
+            }
+        }
+
+        if count > 0 {
+            cpu.speed = sum / count / 1024;
+        }
     }
     Some(vec![cpu])
 }
