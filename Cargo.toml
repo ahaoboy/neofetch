@@ -15,8 +15,7 @@ ansi-width = "0.1"
 which-shell = { version = "0.1", git = "https://github.com/ahaoboy/which-shell" }
 tokio = { version = "1", features = ["full"] }
 dirs = "6"
-
-[target.'cfg(not(target_os = "android"))'.dependencies]
+[target.'cfg(not(any(target_arch = "aarch64", target_os = "android")))'.dependencies]
 display-info = { version = "0.5", git = "https://github.com/nashaofu/display-info.git" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
