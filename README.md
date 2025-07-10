@@ -38,6 +38,14 @@ neofetch
 	</a>
 </div>
 
+### Linux aarch64
+
+<div align="center">
+	<a href="https://github.com/ahaoboy/neofetch">
+		<img src="assets/ax6000.svg">
+	</a>
+</div>
+
 ## perf
 
 https://github.com/dylanaraps/neofetch
