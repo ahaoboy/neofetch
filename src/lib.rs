@@ -11,6 +11,7 @@ pub mod icon;
 pub mod ip;
 pub mod kernel;
 pub mod locale;
+pub mod mappings;
 pub mod memory;
 pub mod os;
 pub mod packages;
@@ -20,7 +21,6 @@ pub mod terminal;
 pub mod uptime;
 pub mod user;
 pub mod wm;
-pub mod mappings;
 use cpu::Cpu;
 use disk::Disk;
 use gpu::Gpu;
@@ -103,7 +103,7 @@ pub struct Neofetch {
     pub wm_theme: Option<String>,
     pub terminal: Option<String>,
     pub disk: Option<Vec<Disk>>,
-    pub cpu: Option<Vec<Cpu>>,
+    pub cpu: Option<Cpu>,
     pub gpu: Option<Vec<Gpu>>,
     pub memory: Option<String>,
     pub battery: Option<u32>,
@@ -217,11 +217,10 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
         }
 
-        if let Some(uptime) = self.uptime {
-            if uptime.0 > 0 {
+        if let Some(uptime) = self.uptime
+            && uptime.0 > 0 {
                 info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
             }
-        }
         if let Some(packages) = &self.packages {
             let s = packages.to_string();
             if !s.trim().is_empty() {
@@ -265,8 +264,8 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
         }
 
-        if let Some(disks) = &self.disk {
-            if !disks.is_empty() {
+        if let Some(disks) = &self.disk
+            && !disks.is_empty() {
                 for disk in disks {
                     if disk.total > 0 {
                         info.push_str(&format!(
@@ -276,12 +275,9 @@ impl std::fmt::Display for Neofetch {
                     }
                 }
             }
-        }
 
         if let Some(cpu) = &self.cpu {
-            for i in cpu {
-                info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{i}\n"));
-            }
+            info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
         }
 
         if let Some(gpu) = &self.gpu {

@@ -24,7 +24,7 @@ impl Display for Cpu {
 }
 
 #[cfg(windows)]
-pub async fn get_cpu() -> Option<Vec<Cpu>> {
+pub async fn get_cpu() -> Option<Cpu> {
     use crate::share::wmi_query;
     use serde::Deserialize;
     #[derive(Deserialize, Debug, Clone)]
@@ -41,7 +41,6 @@ pub async fn get_cpu() -> Option<Vec<Cpu>> {
     }
 
     let results: Vec<Processor> = wmi_query().await?;
-    Some(
         results
             .iter()
             .map(|i| Cpu {
@@ -49,12 +48,11 @@ pub async fn get_cpu() -> Option<Vec<Cpu>> {
                 cores: i.number_of_cores,
                 speed: i.current_clock_speed,
             })
-            .collect(),
-    )
+            .next()
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-pub async fn get_cpu() -> Option<Vec<Cpu>> {
+pub async fn get_cpu() -> Option<Cpu> {
     use std::collections::HashMap;
 
     let s = tokio::fs::read_to_string("/proc/cpuinfo").await.ok()?;
@@ -81,11 +79,11 @@ pub async fn get_cpu() -> Option<Vec<Cpu>> {
     if let Some(Some(n)) = cpuinfo.get("cpu cores").map(|s| s.parse::<f64>().ok()) {
         cpu.cores = n as u32;
     }
-    Some(vec![cpu])
+    Some(cpu)
 }
 
 #[cfg(target_os = "android")]
-pub async fn get_cpu() -> Option<Vec<Cpu>> {
+pub async fn get_cpu() -> Option<Cpu> {
     let name = crate::share::get_property("ro.soc.model")?;
     let mut cpu = Cpu {
         name: crate::share::detect_cpu(&name)?,
@@ -121,5 +119,5 @@ pub async fn get_cpu() -> Option<Vec<Cpu>> {
             cpu.speed = sum / count / 1024;
         }
     }
-    Some(vec![cpu])
+    Some(cpu)
 }
