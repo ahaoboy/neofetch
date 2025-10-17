@@ -43,6 +43,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: install ubuntu libxcb1
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get install libxcb1 libxrandr2 libxcb1-dev -y
       - name: run cross-build
         uses: ahaoboy/cross-build@v1
         with:
