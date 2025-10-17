@@ -11,7 +11,7 @@ pub async fn get_memory() -> Option<String> {
         if let Some(line) = line.strip_prefix(total_header) {
             total = line.trim().split(" ").next();
         }
-           if let Some(line) = line.strip_prefix(free_header) {
+        if let Some(line) = line.strip_prefix(free_header) {
             free = line.trim().split(" ").next();
         }
     }

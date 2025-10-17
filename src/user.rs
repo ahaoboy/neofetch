@@ -31,7 +31,7 @@ pub async fn get_user() -> Option<String> {
             .into_owned()
     };
 
-      if !username.is_empty() {
+    if !username.is_empty() {
         return Some(username);
     }
     if let Ok(s) = std::env::var("username") {

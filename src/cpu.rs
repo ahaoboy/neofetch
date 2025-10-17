@@ -41,14 +41,14 @@ pub async fn get_cpu() -> Option<Cpu> {
     }
 
     let results: Vec<Processor> = wmi_query().await?;
-        results
-            .iter()
-            .map(|i| Cpu {
-                name: i.name.trim().to_owned(),
-                cores: i.number_of_cores,
-                speed: i.current_clock_speed,
-            })
-            .next()
+    results
+        .iter()
+        .map(|i| Cpu {
+            name: i.name.trim().to_owned(),
+            cores: i.number_of_cores,
+            speed: i.current_clock_speed,
+        })
+        .next()
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]

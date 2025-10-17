@@ -99,8 +99,12 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
     while let Some(entry) = dir.next_entry().await.ok()? {
         let device_path = entry.path();
 
-        let vendor = tokio::fs::read_to_string(device_path.join("vendor")).await.unwrap_or_default();
-        let device = tokio::fs::read_to_string(device_path.join("device")).await.unwrap_or_default();
+        let vendor = tokio::fs::read_to_string(device_path.join("vendor"))
+            .await
+            .unwrap_or_default();
+        let device = tokio::fs::read_to_string(device_path.join("device"))
+            .await
+            .unwrap_or_default();
 
         let vendor_id = vendor.trim_start_matches("0x").trim().to_lowercase();
         let device_id = device.trim_start_matches("0x").trim().to_lowercase();

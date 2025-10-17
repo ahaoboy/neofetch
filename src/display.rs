@@ -36,7 +36,7 @@ impl std::fmt::Display for Display {
     }
 }
 
-#[cfg(not(any(target_arch = "aarch64", target_os = "android")))]
+#[cfg(not(any(target_arch = "aarch64", target_os = "android", target_env = "musl")))]
 pub async fn get_display() -> Option<Vec<Display>> {
     use display_info::DisplayInfo;
 
