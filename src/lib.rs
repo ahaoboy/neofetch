@@ -23,12 +23,11 @@ pub mod user;
 pub mod wm;
 use cpu::Cpu;
 use disk::Disk;
+use display::{Display, get_display};
 use gpu::Gpu;
 use hostname::get_hostname;
 use os::OS;
 use packages::Packages;
-
-use display::{Display, get_display};
 use uptime::Time;
 use which_shell::ShellVersion;
 

@@ -65,7 +65,7 @@ pub async fn get_display() -> Option<Vec<Display>> {
     Some(v)
 }
 
-#[cfg(any(target_arch = "aarch64", target_os = "android"))]
+#[cfg(any(target_arch = "aarch64", target_os = "android", target_env = "musl"))]
 pub async fn get_display() -> Option<Vec<Display>> {
     None
 }
