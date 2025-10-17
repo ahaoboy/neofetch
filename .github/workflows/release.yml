@@ -43,8 +43,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          repository: 'ilai-deutel/kibi'
       - name: run cross-build
         uses: ahaoboy/cross-build@v1
         with:
