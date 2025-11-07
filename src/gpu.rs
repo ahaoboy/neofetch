@@ -77,12 +77,12 @@ fn load_pci_ids() -> (
                 current_vendor = Some(id.clone());
                 vendors.insert(id, name);
             }
-        } else if let Some(vendor_id) = &current_vendor {
-            if let Some((id, name)) = line.trim().split_once(' ') {
-                let id = id.trim().to_lowercase();
-                let name = name.trim().to_string();
-                devices.insert((vendor_id.clone(), id), name);
-            }
+        } else if let Some(vendor_id) = &current_vendor
+            && let Some((id, name)) = line.trim().split_once(' ')
+        {
+            let id = id.trim().to_lowercase();
+            let name = name.trim().to_string();
+            devices.insert((vendor_id.clone(), id), name);
         }
     }
 
@@ -112,17 +112,15 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
         if let (Some(vendor_name), Some(device_name)) = (
             vendor_names.get(&vendor_id),
             device_names.get(&(vendor_id.clone(), device_id.clone())),
-        ) {
-            if ["Display", "3D", "VGA"]
-                .into_iter()
-                .any(|i| device_name.as_str().contains(i))
-            {
-                v.push(Gpu {
-                    name: vendor_name.to_owned(),
-                    version: device_name.to_owned(),
-                    ram: 0,
-                });
-            }
+        ) && ["Display", "3D", "VGA"]
+            .into_iter()
+            .any(|i| device_name.as_str().contains(i))
+        {
+            v.push(Gpu {
+                name: vendor_name.to_owned(),
+                version: device_name.to_owned(),
+                ram: 0,
+            });
         }
     }
     Some(v)

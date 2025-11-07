@@ -1,38 +1,55 @@
+//! Memory information collector
+//!
+//! Collects memory usage information including total, used, and available memory.
+
+use crate::error::{NeofetchError, Result};
+
+/// Get memory information on Unix-like systems
 #[cfg(not(windows))]
-pub async fn get_memory() -> Option<String> {
-    let s = tokio::fs::read_to_string("/proc/meminfo").await.ok()?;
+pub async fn get_memory() -> Result<String> {
+    use crate::utils::{parse_proc_file, read_file_to_string};
 
-    let mut total = Some("");
-    let mut free = Some("");
+    let content = read_file_to_string("/proc/meminfo").await?;
+    let meminfo = parse_proc_file(&content);
 
-    let total_header = "MemTotal:";
-    let free_header = "MemFree:";
-    for line in s.lines() {
-        if let Some(line) = line.strip_prefix(total_header) {
-            total = line.trim().split(" ").next();
-        }
-        if let Some(line) = line.strip_prefix(free_header) {
-            free = line.trim().split(" ").next();
-        }
-    }
-    let total = total?.trim().split(' ').next()?;
-    let total: f64 = total.parse().ok()?;
+    // Parse total memory
+    let total_str = meminfo
+        .get("MemTotal")
+        .ok_or_else(|| NeofetchError::data_unavailable("MemTotal not found"))?;
+    let total_kb = total_str
+        .split_whitespace()
+        .next()
+        .ok_or_else(|| NeofetchError::parse_error("MemTotal", "missing value"))?
+        .parse::<f64>()
+        .map_err(|e| NeofetchError::parse_error("MemTotal", e.to_string()))?;
 
-    let free = free?.trim().split(' ').next()?;
-    let free: f64 = free.parse().ok()?;
+    // Parse free memory
+    let free_str = meminfo
+        .get("MemFree")
+        .ok_or_else(|| NeofetchError::data_unavailable("MemFree not found"))?;
+    let free_kb = free_str
+        .split_whitespace()
+        .next()
+        .ok_or_else(|| NeofetchError::parse_error("MemFree", "missing value"))?
+        .parse::<f64>()
+        .map_err(|e| NeofetchError::parse_error("MemFree", e.to_string()))?;
+
+    // Calculate used memory
+    let used_kb = total_kb - free_kb;
+
     use human_bytes::human_bytes;
-
-    Some(format!(
+    Ok(format!(
         "{} / {}",
-        human_bytes(free * 1024.),
-        human_bytes(total * 1024.),
+        human_bytes(used_kb * 1024.0),
+        human_bytes(total_kb * 1024.0),
     ))
 }
 
+/// Get memory information on Windows
 #[cfg(windows)]
-pub async fn get_memory() -> Option<String> {
-    use crate::share::wmi_query;
+pub async fn get_memory() -> Result<String> {
     use serde::Deserialize;
+
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_OperatingSystem")]
     struct OperatingSystem {
@@ -41,17 +58,30 @@ pub async fn get_memory() -> Option<String> {
         #[serde(rename = "FreePhysicalMemory")]
         free_physical_memory: u64,
     }
-    let results: Vec<OperatingSystem> = wmi_query().await?;
-    let info = results.first()?;
 
-    let used = (info.total_visible_memory_size - info.free_physical_memory) as f64;
-    let total = info.total_visible_memory_size as f64;
+    // Query WMI for memory information
+    let com = wmi::COMLibrary::new()
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
+    let wmi_con = wmi::WMIConnection::new(com)
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
+    let results: Vec<OperatingSystem> = wmi_con
+        .async_query()
+        .await
+        .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
+
+    let info = results
+        .first()
+        .ok_or_else(|| NeofetchError::data_unavailable("No memory information found"))?;
+
+    let used_kb = (info.total_visible_memory_size - info.free_physical_memory) as f64;
+    let total_kb = info.total_visible_memory_size as f64;
+    let usage_percent = (used_kb / total_kb * 100.0) as u32;
+
     use human_bytes::human_bytes;
-
-    Some(format!(
+    Ok(format!(
         "{} / {} ({}%)",
-        human_bytes(used * 1024.),
-        human_bytes(total * 1024.),
-        (used / total * 100.) as u32
+        human_bytes(used_kb * 1024.0),
+        human_bytes(total_kb * 1024.0),
+        usage_percent
     ))
 }

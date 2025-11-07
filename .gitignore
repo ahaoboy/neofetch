@@ -1,2 +1,41 @@
-/target
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
 Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+
+# Config files (may contain sensitive data)
+configs/ShellCrash.cfg
+configs/*.cfg
+
+# Temporary files
+/tmp/
+*.tmp
+*.temp
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Kiro
+.kiro/
+
+/meta.csv
+/meta.json

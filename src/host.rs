@@ -39,10 +39,10 @@ pub async fn get_host() -> Option<String> {
     if let (Ok(name), Ok(version)) = (
         tokio::fs::read_to_string("/sys/devices/virtual/dmi/id/board_name").await,
         tokio::fs::read_to_string("/sys/devices/virtual/dmi/id/product_version").await,
-    ) {
-        if !name.is_empty() && !version.is_empty() {
-            return format!("{} {}", name.trim(), version.trim()).into();
-        }
+    ) && !name.is_empty()
+        && !version.is_empty()
+    {
+        return format!("{} {}", name.trim(), version.trim()).into();
     }
     None
 }

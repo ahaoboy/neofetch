@@ -1,3 +1,8 @@
+//! Operating system information collector
+//!
+//! Collects OS name, version, and distribution information across platforms.
+
+use crate::error::{NeofetchError, Result};
 use std::fmt::Display;
 
 #[derive(Debug, Clone, Copy)]
@@ -510,10 +515,11 @@ impl Display for OS {
         f.write_str(&s)
     }
 }
+/// Get OS information on Windows
 #[cfg(windows)]
-pub async fn get_os() -> Option<OS> {
-    use crate::share::wmi_query;
+pub async fn get_os() -> Result<OS> {
     use serde::Deserialize;
+
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_OperatingSystem")]
     struct OperatingSystem {
@@ -521,111 +527,142 @@ pub async fn get_os() -> Option<OS> {
         caption: String,
     }
 
-    let results: Vec<OperatingSystem> = wmi_query().await?;
-    let name = results
-        .first()
-        .map(|i| i.caption.trim())?
-        .replace("Microsoft ", "");
-
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_Processor")]
     struct Processor {
         #[serde(rename = "Architecture")]
         architecture: u32,
     }
-    let results: Vec<Processor> = wmi_query().await?;
-    let arch = match results.first().map(|i| i.architecture)? {
-        0 => "x86".to_owned(),
-        9 => "x86_64".to_owned(),
-        12 => "ARM".to_owned(),
-        5 => "ARM64".to_owned(),
-        _ => "Unknown".to_owned(),
+
+    // Query OS name
+    let com = wmi::COMLibrary::new()
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
+    let wmi_con = wmi::WMIConnection::new(com)
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
+
+    let os_results: Vec<OperatingSystem> = wmi_con
+        .async_query()
+        .await
+        .map_err(|e| NeofetchError::wmi_error(format!("OS query failed: {}", e)))?;
+
+    let name = os_results
+        .first()
+        .ok_or_else(|| NeofetchError::data_unavailable("No OS information found"))?
+        .caption
+        .trim()
+        .replace("Microsoft ", "");
+
+    // Query processor architecture
+    let com2 = wmi::COMLibrary::new()
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
+    let wmi_con2 = wmi::WMIConnection::new(com2)
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
+
+    let proc_results: Vec<Processor> = wmi_con2
+        .async_query()
+        .await
+        .map_err(|e| NeofetchError::wmi_error(format!("Processor query failed: {}", e)))?;
+
+    let arch = proc_results
+        .first()
+        .map(|p| match p.architecture {
+            0 => "x86",
+            9 => "x86_64",
+            12 => "ARM",
+            5 => "ARM64",
+            _ => "Unknown",
+        })
+        .unwrap_or("Unknown")
+        .to_string();
+
+    // Determine distro variant
+    let distro = if name.starts_with("Windows 11") {
+        Distro::Windows11
+    } else if name.starts_with("Windows 10") {
+        Distro::Windows10
+    } else {
+        Distro::Windows
     };
 
-    if name.starts_with("Windows 11") {
-        return Some(OS {
-            distro: Distro::Windows11,
-            name,
-            arch,
-        });
-    } else if name.starts_with("Windows 10") {
-        return Some(OS {
-            distro: Distro::Windows10,
-            name,
-            arch,
-        });
-    } else if name.starts_with("Windows Server") {
-        return Some(OS {
-            distro: Distro::Windows,
-            name,
-            arch,
-        });
-    }
-
-    None
+    Ok(OS { distro, name, arch })
 }
 
+/// Get OS information on Unix-like systems
 #[cfg(unix)]
-pub async fn get_os() -> Option<OS> {
+pub async fn get_os() -> Result<OS> {
+    use crate::utils::read_file_to_string;
     use std::ffi::CStr;
-    let mut uts: libc::utsname = unsafe { std::mem::zeroed() };
 
+    // Get architecture using uname
+    let mut uts: libc::utsname = unsafe { std::mem::zeroed() };
     let result = unsafe { libc::uname(&mut uts) };
     if result != 0 {
-        return None;
+        return Err(NeofetchError::system_call("uname failed"));
     }
 
     let arch = unsafe { CStr::from_ptr(uts.machine.as_ptr()) }
         .to_string_lossy()
         .into_owned();
-    // let sysname = unsafe { CStr::from_ptr(uts.sysname.as_ptr()) }
-    //     .to_string_lossy()
-    //     .into_owned();
+
     let sysname = std::env::consts::OS.to_string();
 
     match sysname.to_lowercase().as_str() {
         #[cfg(target_os = "android")]
         "android" => {
-            if let Some(version) = crate::share::get_property("ro.build.version.release") {
-                return Some(OS {
-                    distro: Distro::Android,
-                    arch,
-                    name: format!("Android {version}"),
-                });
-            }
-            return Some(OS {
+            let version = crate::share::get_property("ro.build.version.release");
+            let name = if let Some(v) = version {
+                format!("Android {}", v)
+            } else {
+                "Android".to_string()
+            };
+
+            Ok(OS {
                 distro: Distro::Android,
                 arch,
-                name: format!("Android"),
-            });
+                name,
+            })
         }
         "linux" | "gnu/linux" => {
-            if let Ok(lsb) = tokio::fs::read_to_string("/etc/os-release").await {
-                for line in lsb.lines() {
-                    if line.starts_with("PRETTY_NAME=\"Ubuntu") {
-                        return Some(OS {
-                            distro: Distro::Ubuntu,
-                            arch,
-                            name: line[13..line.len() - 1].to_string(),
-                        });
+            // Try to read /etc/os-release for distribution info
+            if let Ok(content) = read_file_to_string("/etc/os-release").await {
+                for line in content.lines() {
+                    if let Some(pretty_name) = line.strip_prefix("PRETTY_NAME=") {
+                        let name = pretty_name.trim_matches('"').to_string();
+
+                        // Detect specific distributions
+                        let distro = if name.contains("Ubuntu") {
+                            Distro::Ubuntu
+                        } else if name.contains("Debian") {
+                            Distro::Debian
+                        } else if name.contains("Fedora") {
+                            Distro::Fedora
+                        } else if name.contains("Arch") {
+                            Distro::Arch
+                        } else if name.contains("Manjaro") {
+                            Distro::Manjaro
+                        } else if name.contains("OpenWrt") {
+                            Distro::OpenWrt
+                        } else {
+                            Distro::Linux
+                        };
+
+                        return Ok(OS { distro, arch, name });
                     }
                 }
             }
-            return Some(OS {
+
+            // Fallback to generic Linux
+            Ok(OS {
                 distro: Distro::Linux,
                 arch,
-                name: "Linux".into(),
-            });
+                name: "Linux".to_string(),
+            })
         }
-        "darwin" | "macos" | "ios" => {
-            return Some(OS {
-                distro: Distro::Darwin,
-                arch,
-                name: "Darwin".into(),
-            });
-        }
-        _ => {}
+        "darwin" | "macos" | "ios" => Ok(OS {
+            distro: Distro::Darwin,
+            arch,
+            name: "Darwin".to_string(),
+        }),
+        _ => Err(NeofetchError::UnsupportedPlatform),
     }
-
-    None
 }
