@@ -319,7 +319,7 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
         let temp_celsius = temp_kelvin - 273.15;
 
         // Skip invalid temperatures
-        if temp_celsius < MIN_TEMP || temp_celsius > MAX_TEMP {
+        if !(MIN_TEMP..=MAX_TEMP).contains(&temp_celsius) {
             continue;
         }
 
