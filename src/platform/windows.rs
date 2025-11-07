@@ -32,13 +32,9 @@ use winreg::HKEY;
 /// # }
 /// ```
 pub async fn wmi_query<T: DeserializeOwned>() -> Result<Vec<T>> {
-    use wmi::{COMLibrary, WMIConnection};
+    use wmi::WMIConnection;
 
-    let com = COMLibrary::new().map_err(|e| {
-        NeofetchError::wmi_error(format!("Failed to initialize COM library: {}", e))
-    })?;
-
-    let wmi_con = WMIConnection::new(com)
+    let wmi_con = WMIConnection::new()
         .map_err(|e| NeofetchError::wmi_error(format!("Failed to create WMI connection: {}", e)))?;
 
     let results: Vec<T> = wmi_con
@@ -57,13 +53,9 @@ pub async fn wmi_query<T: DeserializeOwned>() -> Result<Vec<T>> {
 /// # Returns
 /// * `Result<Vec<T>>` - Vector of deserialized WMI objects
 pub async fn wmi_query_with_filter<T: DeserializeOwned>(query: &str) -> Result<Vec<T>> {
-    use wmi::{COMLibrary, WMIConnection};
+    use wmi::WMIConnection;
 
-    let com = COMLibrary::new().map_err(|e| {
-        NeofetchError::wmi_error(format!("Failed to initialize COM library: {}", e))
-    })?;
-
-    let wmi_con = WMIConnection::new(com)
+    let wmi_con = WMIConnection::new()
         .map_err(|e| NeofetchError::wmi_error(format!("Failed to create WMI connection: {}", e)))?;
 
     let results: Vec<T> = wmi_con

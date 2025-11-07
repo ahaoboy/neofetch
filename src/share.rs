@@ -54,15 +54,6 @@ pub fn get_ppid(id: u32) -> Option<u32> {
     None
 }
 
-#[cfg(windows)]
-pub async fn wmi_query<T: serde::de::DeserializeOwned>() -> Option<Vec<T>> {
-    use wmi::{COMLibrary, WMIConnection};
-    let com = COMLibrary::new().ok()?;
-    let wmi_con = WMIConnection::new(com).ok()?;
-    let results: Vec<T> = wmi_con.async_query().await.ok()?;
-    Some(results)
-}
-
 #[cfg(target_os = "android")]
 unsafe extern "C" {
     fn __system_property_get(name: *const libc::c_char, value: *mut libc::c_char) -> i32;

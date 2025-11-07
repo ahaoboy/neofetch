@@ -56,6 +56,8 @@ pub async fn get_process_count() -> Result<usize> {
 pub async fn get_process_count() -> Result<usize> {
     use serde::Deserialize;
 
+    use crate::platform::wmi_query;
+
     #[derive(Deserialize, Debug)]
     #[serde(rename = "Win32_Process")]
     struct Process {
@@ -64,12 +66,7 @@ pub async fn get_process_count() -> Result<usize> {
         process_id: u32,
     }
 
-    let com = wmi::COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
-    let wmi_con = wmi::WMIConnection::new(com)
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
-    let results: Vec<Process> = wmi_con
-        .async_query()
+    let results: Vec<Process> = wmi_query()
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
 
@@ -142,6 +139,8 @@ pub async fn get_boot_time() -> Result<i64> {
 pub async fn get_boot_time() -> Result<i64> {
     use serde::Deserialize;
 
+    use crate::platform::wmi_query;
+
     #[derive(Deserialize, Debug)]
     #[serde(rename = "Win32_OperatingSystem")]
     struct OperatingSystem {
@@ -149,12 +148,7 @@ pub async fn get_boot_time() -> Result<i64> {
         last_boot_up_time: Option<String>,
     }
 
-    let com = wmi::COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
-    let wmi_con = wmi::WMIConnection::new(com)
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
-    let results: Vec<OperatingSystem> = wmi_con
-        .async_query()
+    let results: Vec<OperatingSystem> = wmi_query()
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
 

@@ -1,7 +1,8 @@
 #[cfg(windows)]
 pub async fn get_hostname() -> Option<String> {
-    use crate::share::wmi_query;
     use serde::Deserialize;
+
+    use crate::platform::wmi_query;
 
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_ComputerSystem")]
@@ -9,7 +10,7 @@ pub async fn get_hostname() -> Option<String> {
         #[serde(rename = "Name")]
         name: String,
     }
-    let results: Vec<ComputerSystem> = wmi_query().await?;
+    let results: Vec<ComputerSystem> = wmi_query().await.ok()?;
 
     results.first().map(|i| i.name.clone())
 }

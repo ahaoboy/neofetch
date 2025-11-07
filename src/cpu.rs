@@ -37,6 +37,8 @@ impl Display for Cpu {
 pub async fn get_cpu() -> Result<Cpu> {
     use serde::Deserialize;
 
+    use crate::platform::wmi_query;
+
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_Processor")]
     struct Processor {
@@ -49,12 +51,7 @@ pub async fn get_cpu() -> Result<Cpu> {
     }
 
     // Use WMI to query processor information
-    let com = wmi::COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
-    let wmi_con = wmi::WMIConnection::new(com)
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
-    let results: Vec<Processor> = wmi_con
-        .async_query()
+    let results: Vec<Processor> = wmi_query()
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
 

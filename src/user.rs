@@ -1,7 +1,8 @@
 #[cfg(windows)]
 pub async fn get_user() -> Option<String> {
-    use crate::share::wmi_query;
     use serde::Deserialize;
+
+    use crate::platform::wmi_query;
 
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_ComputerSystem")]
@@ -9,7 +10,7 @@ pub async fn get_user() -> Option<String> {
         #[serde(rename = "UserName")]
         user_name: Option<String>,
     }
-    let results: Vec<ComputerSystem> = wmi_query().await?;
+    let results: Vec<ComputerSystem> = wmi_query().await.ok()?;
     let name = results.first().map(|i| i.user_name.clone())??;
 
     name.split("\\").last().map(|i| i.to_owned())

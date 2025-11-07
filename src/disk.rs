@@ -35,6 +35,8 @@ impl Display for Disk {
 pub async fn get_disk() -> Result<Vec<Disk>> {
     use serde::Deserialize;
 
+    use crate::platform::wmi_query;
+
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_logicaldisk")]
     struct Logicaldisk {
@@ -47,12 +49,7 @@ pub async fn get_disk() -> Result<Vec<Disk>> {
     }
 
     // Query WMI for disk information
-    let com = wmi::COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
-    let wmi_con = wmi::WMIConnection::new(com)
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
-    let results: Vec<Logicaldisk> = wmi_con
-        .async_query()
+    let results: Vec<Logicaldisk> = wmi_query()
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
 

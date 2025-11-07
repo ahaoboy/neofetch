@@ -26,8 +26,9 @@ impl Display for Gpu {
 
 #[cfg(windows)]
 pub async fn get_gpu() -> Option<Vec<Gpu>> {
-    use crate::share::wmi_query;
     use serde::Deserialize;
+
+    use crate::platform::wmi_query;
 
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_VideoController")]
@@ -40,7 +41,7 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
         pub adapter_ram: u32,
     }
 
-    let results: Vec<VideoController> = wmi_query().await?;
+    let results: Vec<VideoController> = wmi_query().await.ok()?;
 
     Some(
         results

@@ -520,6 +520,8 @@ impl Display for OS {
 pub async fn get_os() -> Result<OS> {
     use serde::Deserialize;
 
+    use crate::platform::wmi_query;
+
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_OperatingSystem")]
     struct OperatingSystem {
@@ -535,13 +537,7 @@ pub async fn get_os() -> Result<OS> {
     }
 
     // Query OS name
-    let com = wmi::COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
-    let wmi_con = wmi::WMIConnection::new(com)
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
-
-    let os_results: Vec<OperatingSystem> = wmi_con
-        .async_query()
+    let os_results: Vec<OperatingSystem> = wmi_query()
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("OS query failed: {}", e)))?;
 
@@ -553,13 +549,7 @@ pub async fn get_os() -> Result<OS> {
         .replace("Microsoft ", "");
 
     // Query processor architecture
-    let com2 = wmi::COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
-    let wmi_con2 = wmi::WMIConnection::new(com2)
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
-
-    let proc_results: Vec<Processor> = wmi_con2
-        .async_query()
+    let proc_results: Vec<Processor> = wmi_query()
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("Processor query failed: {}", e)))?;
 

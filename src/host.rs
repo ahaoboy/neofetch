@@ -1,7 +1,8 @@
 #[cfg(windows)]
 pub async fn get_host() -> Option<String> {
-    use crate::share::wmi_query;
     use serde::Deserialize;
+
+    use crate::platform::wmi_query;
 
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_computersystem")]
@@ -10,7 +11,7 @@ pub async fn get_host() -> Option<String> {
         manufacturer: String,
     }
 
-    let results: Vec<Computersystem> = wmi_query().await?;
+    let results: Vec<Computersystem> = wmi_query().await.ok()?;
     results.first().map(|i| i.manufacturer.clone())
 }
 

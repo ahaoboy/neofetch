@@ -42,6 +42,8 @@ impl Display for NetworkInfo {
 pub async fn get_network_info() -> Result<Vec<NetworkInfo>> {
     use serde::Deserialize;
 
+    use crate::platform::wmi_query;
+
     #[derive(Deserialize, Debug)]
     #[serde(rename = "Win32_NetworkAdapterConfiguration")]
     struct NetworkAdapter {
@@ -55,12 +57,7 @@ pub async fn get_network_info() -> Result<Vec<NetworkInfo>> {
         ip_enabled: Option<bool>,
     }
 
-    let com = wmi::COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
-    let wmi_con = wmi::WMIConnection::new(com)
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
-    let results: Vec<NetworkAdapter> = wmi_con
-        .async_query()
+    let results: Vec<NetworkAdapter> = wmi_query()
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
 

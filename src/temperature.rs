@@ -220,6 +220,8 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
 pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     use serde::Deserialize;
 
+    use crate::platform::wmi_query;
+
     #[derive(Deserialize, Debug)]
     #[serde(rename = "MSAcpi_ThermalZoneTemperature")]
     struct ThermalZone {
@@ -230,13 +232,7 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     }
 
     // Try WMI thermal zone query (limited support on Windows)
-    let com = wmi::COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
-    let wmi_con = wmi::WMIConnection::with_namespace_path("root\\wmi", com)
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
-
-    let results: Vec<ThermalZone> = wmi_con
-        .async_query()
+    let results: Vec<ThermalZone> = wmi_query()
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
 

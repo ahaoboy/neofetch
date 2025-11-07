@@ -51,11 +51,12 @@ fn with_unit(n: u64, unit: &str) -> String {
 
 #[cfg(windows)]
 pub async fn get_uptime() -> Option<Time> {
-    use crate::share::wmi_query;
     use chrono::TimeZone;
     use chrono::Utc;
     use chrono::{FixedOffset, NaiveDateTime};
     use serde::Deserialize;
+
+    use crate::platform::wmi_query;
 
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_OperatingSystem")]
@@ -64,7 +65,7 @@ pub async fn get_uptime() -> Option<Time> {
         last_boot_up_time: String,
     }
 
-    let results: Vec<OperatingSystem> = wmi_query().await?;
+    let results: Vec<OperatingSystem> = wmi_query().await.ok()?;
     // 20250530024623.265456+480
     let input = results.first().map(|i| i.last_boot_up_time.clone())?;
 

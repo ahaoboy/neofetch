@@ -2,14 +2,14 @@
 pub async fn get_locale() -> Option<String> {
     use serde::Deserialize;
 
-    use crate::share::{detect_locale, wmi_query};
+    use crate::{platform::wmi_query, share::detect_locale};
     #[derive(Deserialize, Debug)]
     #[serde(rename = "Win32_OperatingSystem")]
     struct Win32OperatingSystem {
         locale: String,
     }
 
-    let results: Vec<Win32OperatingSystem> = wmi_query().await?;
+    let results: Vec<Win32OperatingSystem> = wmi_query().await.ok()?;
     let hex = results.first()?;
 
     detect_locale(&hex.locale)
