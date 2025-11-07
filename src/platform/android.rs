@@ -6,9 +6,9 @@
 use crate::error::{NeofetchError, Result};
 use std::ffi::{CStr, CString};
 
-/// FFI binding to Android's __system_property_get
 #[cfg(target_os = "android")]
-extern "C" {
+unsafe extern "C" {
+    /// FFI binding to Android's __system_property_get
     fn __system_property_get(name: *const libc::c_char, value: *mut libc::c_char) -> i32;
 }
 
@@ -151,7 +151,9 @@ pub async fn get_cpu_freq(core: u32) -> Result<u32> {
     content
         .trim()
         .parse()
-        .map_err(|e| NeofetchError::parse_error("cpu_frequency", e))
+        .map_err(|e: std::num::ParseIntError| {
+            NeofetchError::parse_error("cpu_frequency", e.to_string())
+        })
 }
 
 /// Get average CPU frequency across all cores
