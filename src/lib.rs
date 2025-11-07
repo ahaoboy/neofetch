@@ -56,7 +56,7 @@ use crate::locale::get_locale;
 use crate::memory::get_memory;
 use crate::packages::get_packages;
 use crate::shell::which_shell;
-use crate::terminal::get_terminal;
+use crate::terminal::{Terminal, get_terminal};
 use crate::uptime::get_uptime;
 use crate::user::get_user;
 use crate::wm::{get_wm, get_wm_theme};
@@ -111,7 +111,7 @@ pub struct Neofetch {
     pub de: Option<String>,
     pub wm: Result<String>,
     pub wm_theme: Result<String>,
-    pub terminal: Result<String>,
+    pub terminal: Result<Terminal>,
     pub disk: Result<Vec<Disk>>,
     pub cpu: Result<Cpu>,
     pub gpu: Option<Vec<Gpu>>,
