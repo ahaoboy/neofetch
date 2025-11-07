@@ -6,31 +6,6 @@ use crate::error::{NeofetchError, Result};
 use serde::de::DeserializeOwned;
 use winreg::HKEY;
 
-/// Execute a WMI query and return deserialized results
-///
-/// # Type Parameters
-/// * `T` - Type to deserialize WMI results into
-///
-/// # Returns
-/// * `Result<Vec<T>>` - Vector of deserialized WMI objects
-///
-/// # Example
-/// ```no_run
-/// use serde::Deserialize;
-/// use neofetch::platform::wmi_query;
-///
-/// #[derive(Deserialize)]
-/// #[serde(rename = "Win32_Processor")]
-/// struct Processor {
-///     #[serde(rename = "Name")]
-///     name: String,
-/// }
-///
-/// # async fn example() -> neofetch::Result<()> {
-/// let processors: Vec<Processor> = wmi_query().await?;
-/// # Ok(())
-/// # }
-/// ```
 pub async fn wmi_query<T: DeserializeOwned>() -> Result<Vec<T>> {
     use wmi::WMIConnection;
 
@@ -45,13 +20,20 @@ pub async fn wmi_query<T: DeserializeOwned>() -> Result<Vec<T>> {
     Ok(results)
 }
 
-/// Execute a WMI query with a custom query string
-///
-/// # Arguments
-/// * `query` - WQL query string
-///
-/// # Returns
-/// * `Result<Vec<T>>` - Vector of deserialized WMI objects
+pub async fn wmi_query_with_ns<T: DeserializeOwned>(ns: &str) -> Result<Vec<T>> {
+    use wmi::WMIConnection;
+
+    let wmi_con = WMIConnection::with_namespace_path(ns)
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to create WMI connection: {}", e)))?;
+
+    let results: Vec<T> = wmi_con
+        .async_query()
+        .await
+        .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
+
+    Ok(results)
+}
+
 pub async fn wmi_query_with_filter<T: DeserializeOwned>(query: &str) -> Result<Vec<T>> {
     use wmi::WMIConnection;
 
@@ -65,15 +47,6 @@ pub async fn wmi_query_with_filter<T: DeserializeOwned>(query: &str) -> Result<V
     Ok(results)
 }
 
-/// Get Windows registry value
-///
-/// # Arguments
-/// * `hive` - Registry hive (e.g., HKEY_LOCAL_MACHINE)
-/// * `path` - Registry key path
-/// * `value_name` - Name of the value to retrieve
-///
-/// # Returns
-/// * `Result<String>` - Registry value as string
 pub fn get_registry_string(hive: HKEY, path: &str, value_name: &str) -> Result<String> {
     use winreg::RegKey;
 
@@ -113,21 +86,6 @@ pub fn get_windows_version() -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // #[tokio::test]
-    // async fn test_wmi_query() {
-    //     use serde::Deserialize;
-
-    //     #[derive(Deserialize)]
-    //     #[serde(rename = "Win32_OperatingSystem")]
-    //     struct OS {
-    //         #[serde(rename = "Caption")]
-    //         caption: String,
-    //     }
-
-    //     let result: Result<Vec<OS>> = wmi_query().await;
-    //     assert!(result.is_ok());
-    // }
 
     #[test]
     fn test_get_windows_version() {

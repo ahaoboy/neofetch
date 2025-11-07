@@ -176,19 +176,22 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
                 || label_lower.contains("cluster")
                 || label_lower.contains("silver")
                 || label_lower.contains("gold")
-                || label_lower.contains("prime") {
+                || label_lower.contains("prime")
+            {
                 cpu_temps.push(temp_celsius);
             }
             // GPU sensors: gpu, gpuss (GPU subsystem), kgsl (Kernel Graphics Support Layer)
             else if label_lower.contains("gpu")
                 || label_lower.contains("gpuss")
-                || label_lower.contains("kgsl") {
+                || label_lower.contains("kgsl")
+            {
                 gpu_temps.push(temp_celsius);
             }
             // Battery sensors: battery, batt, charger
             else if label_lower.contains("battery")
                 || label_lower.contains("batt")
-                || label_lower.contains("charger") {
+                || label_lower.contains("charger")
+            {
                 battery_temps.push(temp_celsius);
             }
             // Note: Sensors like xoagg_therm (XO aggregate), sdr0_pa (SDR power amplifier),
@@ -287,44 +290,101 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
 pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     use serde::Deserialize;
 
-    use crate::platform::wmi_query;
+    use crate::platform::wmi_query_with_ns;
 
     #[derive(Deserialize, Debug)]
     #[serde(rename = "MSAcpi_ThermalZoneTemperature")]
-    struct ThermalZone {
+    struct ThermalZoneTemperature {
         #[serde(rename = "CurrentTemperature")]
-        current_temperature: Option<u32>,
+        current_temperature: u32,
         #[serde(rename = "InstanceName")]
-        instance_name: Option<String>,
+        instance_name: String,
     }
 
+    const MIN_TEMP: f32 = 0.0; // Minimum valid temperature (Celsius)
+    const MAX_TEMP: f32 = 120.0; // Maximum valid temperature (Celsius)
+
     // Try WMI thermal zone query (limited support on Windows)
-    let results: Vec<ThermalZone> = wmi_query()
+    let results: Vec<ThermalZoneTemperature> = wmi_query_with_ns("root\\wmi")
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
 
-    let mut sensors = Vec::new();
+    let mut cpu_temps = Vec::new();
+    let mut gpu_temps = Vec::new();
+    let mut battery_temps = Vec::new();
 
     for zone in results {
-        if let Some(temp_deciseconds) = zone.current_temperature {
-            // WMI returns temperature in tenths of Kelvin
-            let temp_kelvin = temp_deciseconds as f32 / 10.0;
-            let temp_celsius = temp_kelvin - 273.15;
+        // WMI returns temperature in tenths of Kelvin
+        let temp_kelvin = zone.current_temperature as f32 / 10.0;
+        let temp_celsius = temp_kelvin - 273.15;
 
-            let label = zone
-                .instance_name
-                .unwrap_or_else(|| "Thermal Zone".to_string());
-
-            sensors.push(TempSensor {
-                label,
-                temperature_celsius: temp_celsius,
-            });
+        // Skip invalid temperatures
+        if temp_celsius < MIN_TEMP || temp_celsius > MAX_TEMP {
+            continue;
         }
+
+        // Classify sensor by instance name
+        let name_lower = zone.instance_name.to_lowercase();
+
+        // CPU sensors: cpu, processor, core, package
+        if name_lower.contains("cpu")
+            || name_lower.contains("processor")
+            || name_lower.contains("core")
+            || name_lower.contains("package")
+        {
+            cpu_temps.push(temp_celsius);
+        }
+        // GPU sensors: gpu, graphics, video, display adapter
+        else if name_lower.contains("gpu")
+            || name_lower.contains("graphics")
+            || name_lower.contains("video")
+            || name_lower.contains("display")
+        {
+            gpu_temps.push(temp_celsius);
+        }
+        // Battery sensors: battery, batt, acpi
+        else if name_lower.contains("battery") || name_lower.contains("batt") {
+            battery_temps.push(temp_celsius);
+        }
+        // If no specific category, try to infer from thermal zone naming
+        else if name_lower.contains("tz") || name_lower.contains("thermal") {
+            // Generic thermal zones - classify as CPU by default
+            cpu_temps.push(temp_celsius);
+        }
+    }
+
+    let mut sensors = Vec::new();
+
+    // Calculate and add CPU average (ordered first)
+    if !cpu_temps.is_empty() {
+        let avg_temp = cpu_temps.iter().sum::<f32>() / cpu_temps.len() as f32;
+        sensors.push(TempSensor {
+            label: format!("CPU (avg of {} sensors)", cpu_temps.len()),
+            temperature_celsius: avg_temp,
+        });
+    }
+
+    // Calculate and add GPU average (ordered second)
+    if !gpu_temps.is_empty() {
+        let avg_temp = gpu_temps.iter().sum::<f32>() / gpu_temps.len() as f32;
+        sensors.push(TempSensor {
+            label: format!("GPU (avg of {} sensors)", gpu_temps.len()),
+            temperature_celsius: avg_temp,
+        });
+    }
+
+    // Calculate and add Battery average (ordered third)
+    if !battery_temps.is_empty() {
+        let avg_temp = battery_temps.iter().sum::<f32>() / battery_temps.len() as f32;
+        sensors.push(TempSensor {
+            label: format!("Battery (avg of {} sensors)", battery_temps.len()),
+            temperature_celsius: avg_temp,
+        });
     }
 
     if sensors.is_empty() {
         return Err(NeofetchError::data_unavailable(
-            "Temperature sensors not available via WMI",
+            "No valid temperature sensors found via WMI",
         ));
     }
 
