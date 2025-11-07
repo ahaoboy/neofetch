@@ -1,5 +1,5 @@
 #[cfg(windows)]
-pub async fn get_user() -> Option<String> {
+pub async fn get_user() -> crate::error::Result<String> {
     use serde::Deserialize;
 
     use crate::platform::wmi_query;
@@ -10,20 +10,35 @@ pub async fn get_user() -> Option<String> {
         #[serde(rename = "UserName")]
         user_name: Option<String>,
     }
-    let results: Vec<ComputerSystem> = wmi_query().await.ok()?;
-    let name = results.first().map(|i| i.user_name.clone())??;
 
-    name.split("\\").last().map(|i| i.to_owned())
+    let results: Vec<ComputerSystem> = wmi_query().await?;
+    let name = results
+        .first()
+        .and_then(|i| i.user_name.clone())
+        .ok_or_else(|| crate::error::NeofetchError::data_unavailable("User name not found"))?;
+
+    let username = name
+        .split("\\")
+        .last()
+        .map(|i| i.to_owned())
+        .ok_or_else(|| {
+            crate::error::NeofetchError::parse_error("username", "Invalid username format")
+        })?;
+
+    Ok(username)
 }
 
 #[cfg(unix)]
-pub async fn get_user() -> Option<String> {
+pub async fn get_user() -> crate::error::Result<String> {
     use std::ffi::CStr;
+
     let uid = unsafe { libc::getuid() };
 
     let passwd = unsafe { libc::getpwuid(uid) };
     if passwd.is_null() {
-        return None;
+        return Err(crate::error::NeofetchError::system_call(
+            "Failed to get user information from getpwuid",
+        ));
     }
 
     let username = unsafe {
@@ -33,16 +48,22 @@ pub async fn get_user() -> Option<String> {
     };
 
     if !username.is_empty() {
-        return Some(username);
+        return Ok(username);
     }
+
+    // Fallback to environment variables
     if let Ok(s) = std::env::var("username") {
-        return Some(s);
+        return Ok(s);
     }
 
     if let Ok(s) = std::env::var("HOME") {
         let name = s.replace('\\', "/");
-        let name = name.split('/').next_back()?;
-        return Some(name.into());
+        if let Some(name) = name.split('/').next_back() {
+            return Ok(name.into());
+        }
     }
-    None
+
+    Err(crate::error::NeofetchError::data_unavailable(
+        "User information not available",
+    ))
 }

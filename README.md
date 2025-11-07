@@ -81,6 +81,14 @@ neofetch
 	</a>
 </div>
 
+### openwrt
+
+<div align="center">
+	<a href="https://github.com/ahaoboy/neofetch">
+		<img src="assets/openwrt.svg">
+	</a>
+</div>
+
 ## System Information Displayed
 
 - **Operating System** - Name, version, and architecture

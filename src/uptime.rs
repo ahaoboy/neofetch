@@ -50,7 +50,7 @@ fn with_unit(n: u64, unit: &str) -> String {
 }
 
 #[cfg(windows)]
-pub async fn get_uptime() -> Option<Time> {
+pub async fn get_uptime() -> crate::error::Result<Time> {
     use chrono::TimeZone;
     use chrono::Utc;
     use chrono::{FixedOffset, NaiveDateTime};
@@ -65,18 +65,35 @@ pub async fn get_uptime() -> Option<Time> {
         last_boot_up_time: String,
     }
 
-    let results: Vec<OperatingSystem> = wmi_query().await.ok()?;
-    // 20250530024623.265456+480
-    let input = results.first().map(|i| i.last_boot_up_time.clone())?;
+    let results: Vec<OperatingSystem> = wmi_query().await?;
+    // Format: 20250530024623.265456+480
+    let input = results
+        .first()
+        .map(|i| i.last_boot_up_time.clone())
+        .ok_or_else(|| crate::error::NeofetchError::data_unavailable("Boot time not found"))?;
 
     let now = Utc::now();
+
+    if input.len() < 21 {
+        return Err(crate::error::NeofetchError::parse_error(
+            "boot_time",
+            "Invalid boot time format",
+        ));
+    }
+
     let datetime_str = &input[..21]; // "20250530024623.265456"
     let offset_str = &input[21..]; // "+480"
 
-    let naive_dt = NaiveDateTime::parse_from_str(datetime_str, "%Y%m%d%H%M%S%.f").ok()?;
+    let naive_dt = NaiveDateTime::parse_from_str(datetime_str, "%Y%m%d%H%M%S%.f")
+        .map_err(|e| crate::error::NeofetchError::parse_error("boot_time", e.to_string()))?;
 
-    let offset_minutes: i32 = offset_str.parse::<i32>().ok()?;
-    let offset = FixedOffset::east_opt(offset_minutes * 60)?;
+    let offset_minutes: i32 = offset_str.parse().map_err(|e| {
+        crate::error::NeofetchError::parse_error("timezone_offset", format!("{}", e))
+    })?;
+
+    let offset = FixedOffset::east_opt(offset_minutes * 60).ok_or_else(|| {
+        crate::error::NeofetchError::parse_error("timezone_offset", "Invalid offset")
+    })?;
 
     let datetime_with_tz = offset
         .from_local_datetime(&naive_dt)
@@ -86,21 +103,23 @@ pub async fn get_uptime() -> Option<Time> {
     let uptime = now - datetime_with_tz;
     let uptime_seconds = uptime.num_seconds() as u64;
 
-    Some(Time(uptime_seconds))
+    Ok(Time(uptime_seconds))
 }
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-pub async fn get_uptime() -> Option<Time> {
+pub async fn get_uptime() -> crate::error::Result<Time> {
     let mut info: libc::sysinfo = unsafe { std::mem::zeroed() };
     let result = unsafe { libc::sysinfo(&mut info) };
     if result != 0 {
-        return None;
+        return Err(crate::error::NeofetchError::system_call(
+            "Failed to get system uptime from sysinfo",
+        ));
     }
-    Some(Time(info.uptime as u64))
+    Ok(Time(info.uptime as u64))
 }
 
 #[cfg(target_os = "macos")]
-pub async fn get_uptime() -> Option<Time> {
+pub async fn get_uptime() -> crate::error::Result<Time> {
     let mut mib = [libc::CTL_KERN as i32, libc::KERN_BOOTTIME as i32];
     let mut boot_time: libc::timeval = unsafe { std::mem::zeroed() };
     let mut size = std::mem::size_of::<libc::timeval>();
@@ -116,14 +135,21 @@ pub async fn get_uptime() -> Option<Time> {
         )
     };
     if result != 0 {
-        return None;
+        return Err(crate::error::NeofetchError::system_call(
+            "Failed to get boot time from sysctl",
+        ));
     }
 
-    // 获取当前时间
+    // Get current time
     let mut current_time = unsafe { std::mem::zeroed() };
-    unsafe { libc::gettimeofday(&mut current_time, std::ptr::null_mut()) };
+    let time_result = unsafe { libc::gettimeofday(&mut current_time, std::ptr::null_mut()) };
+    if time_result != 0 {
+        return Err(crate::error::NeofetchError::system_call(
+            "Failed to get current time from gettimeofday",
+        ));
+    }
 
-    // 计算运行时间（秒）
+    // Calculate uptime in seconds
     let uptime = current_time.tv_sec - boot_time.tv_sec;
-    Some(Time(uptime as u64))
+    Ok(Time(uptime as u64))
 }

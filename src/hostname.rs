@@ -1,5 +1,5 @@
 #[cfg(windows)]
-pub async fn get_hostname() -> Option<String> {
+pub async fn get_hostname() -> crate::error::Result<String> {
     use serde::Deserialize;
 
     use crate::platform::wmi_query;
@@ -10,20 +10,28 @@ pub async fn get_hostname() -> Option<String> {
         #[serde(rename = "Name")]
         name: String,
     }
-    let results: Vec<ComputerSystem> = wmi_query().await.ok()?;
 
-    results.first().map(|i| i.name.clone())
+    let results: Vec<ComputerSystem> = wmi_query().await?;
+
+    results
+        .first()
+        .map(|i| i.name.clone())
+        .ok_or_else(|| crate::error::NeofetchError::data_unavailable("Hostname not found"))
 }
+
 #[cfg(not(windows))]
-pub async fn get_hostname() -> Option<String> {
+pub async fn get_hostname() -> crate::error::Result<String> {
     use std::ffi::CStr;
+
     let mut buffer = vec![0u8; 256];
 
     let result =
         unsafe { libc::gethostname(buffer.as_mut_ptr() as *mut libc::c_char, buffer.len()) };
 
     if result != 0 {
-        return None;
+        return Err(crate::error::NeofetchError::system_call(
+            "Failed to get hostname from gethostname",
+        ));
     }
 
     let hostname = unsafe {
@@ -32,5 +40,5 @@ pub async fn get_hostname() -> Option<String> {
             .into_owned()
     };
 
-    Some(hostname)
+    Ok(hostname)
 }

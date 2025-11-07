@@ -1,6 +1,6 @@
 #[cfg(windows)]
-pub async fn get_wm() -> Option<String> {
-    tokio::task::spawn_blocking(|| {
+pub async fn get_wm() -> crate::error::Result<String> {
+    tokio::task::spawn_blocking(|| -> crate::error::Result<String> {
         use windows::Win32::{
             Foundation::CloseHandle,
             System::Diagnostics::ToolHelp::{
@@ -10,10 +10,17 @@ pub async fn get_wm() -> Option<String> {
         };
 
         unsafe {
-            let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0).ok()?;
+            let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0).map_err(|e| {
+                crate::error::NeofetchError::system_call(format!(
+                    "Failed to create process snapshot: {}",
+                    e
+                ))
+            })?;
 
             if snapshot.is_invalid() {
-                return None;
+                return Err(crate::error::NeofetchError::system_call(
+                    "Invalid process snapshot",
+                ));
             }
 
             let mut pe32 = PROCESSENTRY32W {
@@ -28,7 +35,8 @@ pub async fn get_wm() -> Option<String> {
                     );
 
                     if name.starts_with("explorer.exe") {
-                        return Some("Explorer".into());
+                        let _ = CloseHandle(snapshot);
+                        return Ok("Explorer".into());
                     }
 
                     if Process32NextW(snapshot, &mut pe32).is_err() {
@@ -36,23 +44,24 @@ pub async fn get_wm() -> Option<String> {
                     }
                 }
             }
-            CloseHandle(snapshot).ok()?;
+            let _ = CloseHandle(snapshot);
         }
 
-        None
+        Err(crate::error::NeofetchError::data_unavailable(
+            "Window manager not found",
+        ))
     })
-    .await
-    .ok()?
+    .await?
 }
 
 #[cfg(not(windows))]
-pub async fn get_wm() -> Option<String> {
-    None
+pub async fn get_wm() -> crate::error::Result<String> {
+    Err(crate::error::NeofetchError::UnsupportedPlatform)
 }
 
 #[cfg(windows)]
-pub async fn get_wm_theme() -> Option<String> {
-    tokio::task::spawn_blocking(|| {
+pub async fn get_wm_theme() -> crate::error::Result<String> {
+    tokio::task::spawn_blocking(|| -> crate::error::Result<String> {
         use crate::share::get_file_name;
 
         use winreg::RegKey;
@@ -62,18 +71,30 @@ pub async fn get_wm_theme() -> Option<String> {
 
         let themes_key = hkey_current_user
             .open_subkey(r"Software\Microsoft\Windows\CurrentVersion\Themes")
-            .ok()?;
+            .map_err(|e| {
+                crate::error::NeofetchError::system_call(format!(
+                    "Failed to open registry key: {}",
+                    e
+                ))
+            })?;
 
-        let current_theme: String = themes_key.get_value("CurrentTheme").ok()?;
+        let current_theme: String = themes_key.get_value("CurrentTheme").map_err(|e| {
+            crate::error::NeofetchError::system_call(format!(
+                "Failed to read CurrentTheme value: {}",
+                e
+            ))
+        })?;
 
-        let s = get_file_name(&current_theme)?;
-        Some(s)
+        let theme_name = get_file_name(&current_theme).ok_or_else(|| {
+            crate::error::NeofetchError::parse_error("theme_path", "Failed to extract theme name")
+        })?;
+
+        Ok(theme_name)
     })
-    .await
-    .ok()?
+    .await?
 }
 
 #[cfg(not(windows))]
-pub async fn get_wm_theme() -> Option<String> {
-    None
+pub async fn get_wm_theme() -> crate::error::Result<String> {
+    Err(crate::error::NeofetchError::UnsupportedPlatform)
 }

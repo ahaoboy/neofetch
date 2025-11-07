@@ -97,26 +97,26 @@ pub fn join(left: String, right: String) -> String {
 #[derive(Debug, Clone)]
 pub struct Neofetch {
     pub os: Result<OS>,
-    pub user: Option<String>,
-    pub host: Option<String>,
-    pub hostname: Option<String>,
-    pub rom: Option<String>,
-    pub baseband: Option<String>,
+    pub user: Result<String>,
+    pub host: Result<String>,
+    pub hostname: Result<String>,
+    pub rom: Result<String>,
+    pub baseband: Result<String>,
     pub kernel: Result<String>,
-    pub uptime: Option<Time>,
-    pub packages: Option<Packages>,
-    pub shell: Option<ShellVersion>,
-    pub display: Option<Vec<Display>>,
+    pub uptime: Result<Time>,
+    pub packages: Result<Packages>,
+    pub shell: Result<ShellVersion>,
+    pub display: Result<Vec<Display>>,
     pub de: Option<String>,
-    pub wm: Option<String>,
-    pub wm_theme: Option<String>,
-    pub terminal: Option<String>,
+    pub wm: Result<String>,
+    pub wm_theme: Result<String>,
+    pub terminal: Result<String>,
     pub disk: Result<Vec<Disk>>,
     pub cpu: Result<Cpu>,
     pub gpu: Option<Vec<Gpu>>,
     pub memory: Result<String>,
-    pub battery: Option<u32>,
-    pub locale: Option<String>,
+    pub battery: Result<u32>,
+    pub locale: Result<String>,
     pub ip: Option<String>,
     pub temperature: Result<Vec<temperature::TempSensor>>,
     pub network: Result<Vec<network::NetworkInfo>>,
@@ -210,8 +210,8 @@ impl std::fmt::Display for Neofetch {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut info = String::new();
         let mut icon = String::new();
-        let user = self.user.clone().unwrap_or_default();
-        let hostname = self.hostname.clone().unwrap_or_default();
+        let user = self.user.as_ref().ok().cloned().unwrap_or_default();
+        let hostname = self.hostname.as_ref().ok().cloned().unwrap_or_default();
 
         info.push_str(&format!(
             "{RESET}{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
@@ -224,15 +224,15 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{}\n", os));
         }
 
-        if let Some(host) = &self.host {
+        if let Ok(host) = &self.host {
             info.push_str(&format!("{GREEN}{BOLD}Host: {RESET}{host}\n"));
         }
 
-        if let Some(rom) = &self.rom {
+        if let Ok(rom) = &self.rom {
             info.push_str(&format!("{GREEN}{BOLD}Rom: {RESET}{rom}\n"));
         }
 
-        if let Some(baseband) = &self.baseband {
+        if let Ok(baseband) = &self.baseband {
             info.push_str(&format!("{GREEN}{BOLD}Baseband: {RESET}{baseband}\n"));
         }
 
@@ -241,24 +241,23 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
         }
 
-        if let Some(uptime) = self.uptime
-            && uptime.0 > 0
-        {
-            info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
-        }
+        if let Ok(uptime) = &self.uptime
+            && uptime.0 > 0 {
+                info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+            }
 
-        if let Some(packages) = &self.packages {
+        if let Ok(packages) = &self.packages {
             let s = packages.to_string();
             if !s.trim().is_empty() {
                 info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{s}\n"));
             }
         }
 
-        if let Some(shell) = &self.shell {
+        if let Ok(shell) = &self.shell {
             info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{shell}\n"));
         }
 
-        if let Some(displays) = &self.display {
+        if let Ok(displays) = &self.display {
             for display in displays {
                 let key = if let Some(i) = &display.friendly_name {
                     format!("{GREEN}{BOLD}Display({i})")
@@ -278,15 +277,15 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}DE: {RESET}{de}\n"));
         }
 
-        if let Some(wm) = &self.wm {
+        if let Ok(wm) = &self.wm {
             info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm}\n"));
 
-            if let Some(theme) = &self.wm_theme {
+            if let Ok(theme) = &self.wm_theme {
                 info.push_str(&format!("{GREEN}{BOLD}WM Theme: {RESET}{theme}\n"));
             }
         }
 
-        if let Some(terminal) = &self.terminal {
+        if let Ok(terminal) = &self.terminal {
             info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
         }
 
@@ -329,7 +328,7 @@ impl std::fmt::Display for Neofetch {
                 }
             }
         }
-        if let Some(battery) = &self.battery {
+        if let Ok(battery) = &self.battery {
             info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
         }
 
@@ -363,7 +362,7 @@ impl std::fmt::Display for Neofetch {
             }
         }
 
-        if let Some(locale) = &self.locale {
+        if let Ok(locale) = &self.locale {
             info.push_str(&format!("{GREEN}{BOLD}Locale: {RESET}{locale}\n"));
         }
 

@@ -86,16 +86,15 @@ fn opkg() -> Option<usize> {
     exec("opkg", ["list-installed"]).map(|i| i.lines().count())
 }
 
-pub async fn get_packages() -> Option<Packages> {
-    tokio::task::spawn_blocking(|| {
-        Some(Packages {
-            snap: snap().unwrap_or_default(),
-            dpkg: dpkg().unwrap_or_default(),
-            pacman: pacman().unwrap_or_default(),
-            scoop: scoop().unwrap_or_default(),
-            opkg: opkg().unwrap_or_default(),
-        })
+pub async fn get_packages() -> crate::error::Result<Packages> {
+    let packages = tokio::task::spawn_blocking(|| Packages {
+        snap: snap().unwrap_or_default(),
+        dpkg: dpkg().unwrap_or_default(),
+        pacman: pacman().unwrap_or_default(),
+        scoop: scoop().unwrap_or_default(),
+        opkg: opkg().unwrap_or_default(),
     })
-    .await
-    .ok()?
+    .await?;
+
+    Ok(packages)
 }

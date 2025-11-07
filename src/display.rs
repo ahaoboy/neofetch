@@ -37,10 +37,12 @@ impl std::fmt::Display for Display {
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_os = "android", target_env = "musl")))]
-pub async fn get_display() -> Option<Vec<Display>> {
+pub async fn get_display() -> crate::error::Result<Vec<Display>> {
     use display_info::DisplayInfo;
 
-    let display_infos = DisplayInfo::all().ok()?;
+    let display_infos = DisplayInfo::all().map_err(|e| {
+        crate::error::NeofetchError::data_unavailable(format!("Failed to get display info: {}", e))
+    })?;
 
     let v: Vec<_> = display_infos
         .iter()
@@ -62,10 +64,10 @@ pub async fn get_display() -> Option<Vec<Display>> {
             primary: Some(i.is_primary),
         })
         .collect();
-    Some(v)
+    Ok(v)
 }
 
 #[cfg(any(target_arch = "aarch64", target_os = "android", target_env = "musl"))]
-pub async fn get_display() -> Option<Vec<Display>> {
-    None
+pub async fn get_display() -> crate::error::Result<Vec<Display>> {
+    Err(crate::error::NeofetchError::UnsupportedPlatform)
 }
