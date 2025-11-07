@@ -189,7 +189,7 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     }
 
     // Try using osx-cpu-temp if available
-    if let Some(output) = execute_command_optional("osx-cpu-temp", &[]).await {
+    if let Some(output) = execute_command_optional("osx-cpu-temp", &[] as &[&str]).await {
         if let Some(temp_str) = output.split('°').next() {
             if let Ok(temp) = temp_str.trim().parse::<f32>() {
                 return Ok(vec![TempSensor {

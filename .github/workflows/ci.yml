@@ -2,6 +2,7 @@ name: test
 
 env:
   CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 permissions:
   contents: write
@@ -13,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-latest, macos-13, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -23,13 +24,15 @@ jobs:
           rustflags: "-A warnings"
           toolchain: "stable"
       - name: install ubuntu
-        if: matrix.os == 'ubuntu-24.04'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get install libxcb1 libxrandr2 libxcb1-dev -y
+      - uses: easy-install/easy-setup@v1
+        with:
+          url: ahaoboy/ansi2
 
       - name: Run
         run: |
-          npm i ansi2 -g
           cargo run -q
           cargo run -q > neofetch-${{ matrix.os }}.ans
           cargo run -q | ansi2 > neofetch-${{ matrix.os }}.svg
