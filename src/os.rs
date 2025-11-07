@@ -640,6 +640,8 @@ pub async fn get_os() -> Result<OS> {
                             Distro::Arch
                         } else if name.contains("Manjaro") {
                             Distro::Manjaro
+                        } else if name.contains("OpenWrt") {
+                            Distro::OpenWrt
                         } else {
                             Distro::Linux
                         };
