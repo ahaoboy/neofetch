@@ -1,10 +1,19 @@
+//! Disk information collector
+//!
+//! Collects disk usage information for mounted filesystems.
+
+use crate::error::{NeofetchError, Result};
 use human_bytes::human_bytes;
 use std::fmt::Display;
 
+/// Disk information structure
 #[derive(Debug, Clone)]
 pub struct Disk {
+    /// Disk name or mount point
     pub name: String,
+    /// Total disk space in bytes
     pub total: u64,
+    /// Used disk space in bytes
     pub used: u64,
 }
 
@@ -12,74 +21,90 @@ impl Display for Disk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let used = human_bytes(self.used as f64);
         let total = human_bytes(self.total as f64);
-        let percent = (self.used as f64 / self.total as f64) * 100.;
-        let percent_str = format!("{percent:2.0}%").trim().to_string();
-        f.write_str(&format!("{used} / {total} ({percent_str})"))
+        let percent = if self.total > 0 {
+            (self.used as f64 / self.total as f64) * 100.0
+        } else {
+            0.0
+        };
+        write!(f, "{} / {} ({:.0}%)", used, total, percent)
     }
 }
 
+/// Get disk information on Windows
 #[cfg(windows)]
-pub async fn get_disk() -> Option<Vec<Disk>> {
-    use crate::share::wmi_query;
+pub async fn get_disk() -> Result<Vec<Disk>> {
     use serde::Deserialize;
+
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_logicaldisk")]
     struct Logicaldisk {
         #[serde(rename = "DeviceID")]
         device_id: String,
         #[serde(rename = "FreeSpace")]
-        free_space: u64,
+        free_space: Option<u64>,
         #[serde(rename = "Size")]
-        size: u64,
+        size: Option<u64>,
     }
 
-    let results: Vec<Logicaldisk> = wmi_query().await?;
-    let mut v = vec![];
-    for i in results {
-        v.push(Disk {
-            name: i.device_id.trim_end_matches(":").to_owned(),
-            total: i.size,
-            used: i.size - i.free_space,
-        })
+    // Query WMI for disk information
+    let com = wmi::COMLibrary::new()
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM: {}", e)))?;
+    let wmi_con = wmi::WMIConnection::new(com)
+        .map_err(|e| NeofetchError::wmi_error(format!("Failed to connect to WMI: {}", e)))?;
+    let results: Vec<Logicaldisk> = wmi_con
+        .async_query()
+        .await
+        .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
+
+    let mut disks = Vec::new();
+    for disk in results {
+        if let (Some(size), Some(free_space)) = (disk.size, disk.free_space)
+            && size > 0
+        {
+            disks.push(Disk {
+                name: disk.device_id.trim_end_matches(':').to_string(),
+                total: size,
+                used: size.saturating_sub(free_space),
+            });
+        }
     }
-    v.sort_by(|a, b| a.name.cmp(&b.name));
-    Some(v)
+
+    disks.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(disks)
 }
 
-// #[cfg(target_os = "android")]
-// const DISK_SKIP: [&str; 2] = ["overlay", "/dev/block"];
-
-// #[cfg(target_os = "macos")]
-// const DISK_SKIP: [&str; 1] = ["devfs"];
-
+/// Get filesystem information for a specific path (Unix)
 #[cfg(unix)]
-fn get_filesystem_info(path: &str) -> Option<Disk> {
+fn get_filesystem_info(path: &str) -> Result<Disk> {
     use std::ffi::CString;
-    use std::io;
 
     let path_cstr = CString::new(path)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))
-        .ok()?;
+        .map_err(|_| NeofetchError::parse_error("path", "invalid path string"))?;
 
     let mut stat: libc::statvfs = unsafe { std::mem::zeroed() };
     let result = unsafe { libc::statvfs(path_cstr.as_ptr(), &mut stat) };
 
     if result != 0 {
-        return None;
+        return Err(NeofetchError::system_call(format!(
+            "statvfs failed for {}",
+            path
+        )));
     }
 
     let total = stat.f_blocks as u64 * stat.f_frsize as u64;
     let available = stat.f_bavail as u64 * stat.f_frsize as u64;
 
-    Some(Disk {
+    Ok(Disk {
         name: path.to_string(),
         total,
-        used: total - available,
+        used: total.saturating_sub(available),
     })
 }
 
+/// Get disk information on Unix-like systems
 #[cfg(unix)]
-pub async fn get_disk() -> Option<Vec<Disk>> {
-    let v = vec![get_filesystem_info("/")?];
-    Some(v)
+pub async fn get_disk() -> Result<Vec<Disk>> {
+    // Get root filesystem info
+    let root_disk = get_filesystem_info("/")?;
+    Ok(vec![root_disk])
 }

@@ -4,6 +4,7 @@ pub mod cpu;
 pub mod de;
 pub mod disk;
 pub mod display;
+pub mod error;
 pub mod gpu;
 pub mod host;
 pub mod hostname;
@@ -13,14 +14,22 @@ pub mod kernel;
 pub mod locale;
 pub mod mappings;
 pub mod memory;
+pub mod network;
 pub mod os;
 pub mod packages;
+pub mod platform;
 pub mod share;
 pub mod shell;
+pub mod system;
+pub mod temperature;
 pub mod terminal;
 pub mod uptime;
 pub mod user;
+pub mod utils;
 pub mod wm;
+
+// Re-export commonly used types
+pub use error::{NeofetchError, Result};
 use cpu::Cpu;
 use disk::Disk;
 use display::{Display, get_display};
@@ -84,15 +93,16 @@ pub fn join(left: String, right: String) -> String {
     s
 }
 
+/// System information container
 #[derive(Debug, Clone)]
 pub struct Neofetch {
-    pub os: Option<OS>,
+    pub os: Result<OS>,
     pub user: Option<String>,
     pub host: Option<String>,
     pub hostname: Option<String>,
     pub rom: Option<String>,
     pub baseband: Option<String>,
-    pub kernel: Option<String>,
+    pub kernel: Result<String>,
     pub uptime: Option<Time>,
     pub packages: Option<Packages>,
     pub shell: Option<ShellVersion>,
@@ -101,16 +111,17 @@ pub struct Neofetch {
     pub wm: Option<String>,
     pub wm_theme: Option<String>,
     pub terminal: Option<String>,
-    pub disk: Option<Vec<Disk>>,
-    pub cpu: Option<Cpu>,
+    pub disk: Result<Vec<Disk>>,
+    pub cpu: Result<Cpu>,
     pub gpu: Option<Vec<Gpu>>,
-    pub memory: Option<String>,
+    pub memory: Result<String>,
     pub battery: Option<u32>,
     pub locale: Option<String>,
     pub ip: Option<String>,
 }
 
 impl Neofetch {
+    /// Collect all system information
     pub async fn new() -> Neofetch {
         let (
             shell,
@@ -155,8 +166,11 @@ impl Neofetch {
             get_hostname(),
             get_locale(),
         );
-        let de = os.clone().and_then(get_de);
+
+        // Get desktop environment based on OS
+        let de = os.as_ref().ok().and_then(|o| get_de(o.clone()));
         let ip = ip::get_ip();
+
         Neofetch {
             os,
             user,
@@ -186,7 +200,7 @@ impl Neofetch {
 
 impl std::fmt::Display for Neofetch {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut info: String = String::new();
+        let mut info = String::new();
         let mut icon = String::new();
         let user = self.user.clone().unwrap_or_default();
         let hostname = self.hostname.clone().unwrap_or_default();
@@ -195,15 +209,17 @@ impl std::fmt::Display for Neofetch {
             "{RESET}{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
         ));
         info.push_str("-------\n");
-        if let Some(os) = &self.os {
-            let s = os.to_string();
+
+        // Handle OS (Result type)
+        if let Ok(os) = &self.os {
             icon = os.distro.icon();
-            info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{s}\n"));
+            info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{}\n", os));
         }
 
         if let Some(host) = &self.host {
             info.push_str(&format!("{GREEN}{BOLD}Host: {RESET}{host}\n"));
         }
+
         if let Some(rom) = &self.rom {
             info.push_str(&format!("{GREEN}{BOLD}Rom: {RESET}{rom}\n"));
         }
@@ -212,7 +228,8 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Baseband: {RESET}{baseband}\n"));
         }
 
-        if let Some(kernel) = &self.kernel {
+        // Handle kernel (Result type)
+        if let Ok(kernel) = &self.kernel {
             info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
         }
 
@@ -221,12 +238,14 @@ impl std::fmt::Display for Neofetch {
         {
             info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
         }
+
         if let Some(packages) = &self.packages {
             let s = packages.to_string();
             if !s.trim().is_empty() {
                 info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{s}\n"));
             }
         }
+
         if let Some(shell) = &self.shell {
             info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{shell}\n"));
         }
@@ -243,8 +262,7 @@ impl std::fmt::Display for Neofetch {
                             format!("{GREEN}{BOLD}Display({s})")
                         })
                 };
-
-                info.push_str(&format!("{key}: {RESET}{}\n", &display));
+                info.push_str(&format!("{key}: {RESET}{}\n", display));
             }
         }
 
@@ -264,9 +282,7 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
         }
 
-        if let Some(disks) = &self.disk
-            && !disks.is_empty()
-        {
+        if let Ok(disks) = &self.disk {
             for disk in disks {
                 if disk.total > 0 {
                     info.push_str(&format!(
@@ -277,17 +293,19 @@ impl std::fmt::Display for Neofetch {
             }
         }
 
-        if let Some(cpu) = &self.cpu {
+        // Handle CPU (Result type)
+        if let Ok(cpu) = &self.cpu {
             info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
         }
 
         if let Some(gpu) = &self.gpu {
-            for i in gpu {
-                info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{i}\n"));
+            for g in gpu {
+                info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{g}\n"));
             }
         }
 
-        if let Some(memory) = &self.memory {
+        // Handle memory (Result type)
+        if let Ok(memory) = &self.memory {
             info.push_str(&format!("{GREEN}{BOLD}Memory: {RESET}{memory}\n"));
         }
 
@@ -302,6 +320,8 @@ impl std::fmt::Display for Neofetch {
         if let Some(locale) = &self.locale {
             info.push_str(&format!("{GREEN}{BOLD}Locale: {RESET}{locale}\n"));
         }
+
+        // Color bars
         let color_str: String = [
             BLACK_BG, RED_BG, GREEN_BG, YELLOW_BG, BLUE_BG, MAGENTA_BG, CYAN_BG, WHITE_BG,
         ]
@@ -309,8 +329,8 @@ impl std::fmt::Display for Neofetch {
         .into_iter()
         .collect();
         info.push('\n');
-
         info.push_str(&(color_str + RESET + "\n"));
+
         let color_str: String = [
             BRIGHT_BLACK_BG,
             BRIGHT_RED_BG,
@@ -326,7 +346,7 @@ impl std::fmt::Display for Neofetch {
         .collect();
         info.push_str(&(color_str + RESET + "\n"));
 
-        f.write_str(&join(icon, info))
+        write!(f, "{}", join(icon, info))
     }
 }
 
