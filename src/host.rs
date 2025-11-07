@@ -49,9 +49,11 @@ pub async fn get_host() -> crate::error::Result<String> {
         tokio::fs::read_to_string("/sys/devices/virtual/dmi/id/product_version").await;
 
     if let (Ok(name), Ok(version)) = (name_result, version_result)
-        && !name.is_empty() && !version.is_empty() {
-            return Ok(format!("{} {}", name.trim(), version.trim()));
-        }
+        && !name.is_empty()
+        && !version.is_empty()
+    {
+        return Ok(format!("{} {}", name.trim(), version.trim()));
+    }
 
     Err(crate::error::NeofetchError::data_unavailable(
         "Host information not available",

@@ -13,6 +13,7 @@ human_bytes = "0.4"
 regex = "1"
 ansi-width = "0.1"
 which-shell = { version = "0.1", git = "https://github.com/ahaoboy/which-shell" }
+which-terminal = { version = "0.1", git = "https://github.com/ahaoboy/which-terminal" }
 tokio = { version = "1", features = ["full"] }
 dirs = "6"
 thiserror = "2"
