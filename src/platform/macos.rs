@@ -34,23 +34,35 @@ pub async fn get_cpu_brand() -> Result<String> {
 /// Get CPU core count
 pub async fn get_cpu_core_count() -> Result<u32> {
     let output = sysctl("hw.ncpu").await?;
-    output.trim().parse()
-        .map_err(|e| crate::error::NeofetchError::parse_error("cpu_count", e))
+    output
+        .trim()
+        .parse()
+        .map_err(|e: std::num::ParseIntError| {
+            crate::error::NeofetchError::parse_error("cpu_count", e.to_string())
+        })
 }
 
 /// Get CPU frequency in MHz
 pub async fn get_cpu_frequency() -> Result<u64> {
     let output = sysctl("hw.cpufrequency").await?;
-    let hz: u64 = output.trim().parse()
-        .map_err(|e| crate::error::NeofetchError::parse_error("cpu_frequency", e))?;
+    let hz: u64 = output
+        .trim()
+        .parse()
+        .map_err(|e: std::num::ParseIntError| {
+            crate::error::NeofetchError::parse_error("cpu_frequency", e.to_string())
+        })?;
     Ok(hz / 1_000_000) // Convert to MHz
 }
 
 /// Get total physical memory in bytes
 pub async fn get_memory_total() -> Result<u64> {
     let output = sysctl("hw.memsize").await?;
-    output.trim().parse()
-        .map_err(|e| crate::error::NeofetchError::parse_error("memory_size", e))
+    output
+        .trim()
+        .parse()
+        .map_err(|e: std::num::ParseIntError| {
+            crate::error::NeofetchError::parse_error("memory_size", e.to_string())
+        })
 }
 
 /// Get macOS version using sw_vers
