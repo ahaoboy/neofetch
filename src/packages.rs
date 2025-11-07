@@ -4,6 +4,7 @@ pub struct Packages {
     dpkg: usize,
     pacman: usize,
     scoop: usize,
+    opkg: usize,
 }
 
 impl Display for Packages {
@@ -21,12 +22,17 @@ impl Display for Packages {
         if self.scoop > 0 {
             v.push(format!("{} (scoop)", self.scoop))
         }
+        if self.opkg > 0 {
+            v.push(format!("{} (opkg)", self.opkg))
+        }
 
         f.write_str(&v.join(", "))
     }
 }
 
 use std::fmt::Display;
+
+use crate::share::exec;
 
 fn pacman() -> Option<usize> {
     #[cfg(unix)]
@@ -75,6 +81,11 @@ fn dpkg() -> Option<usize> {
     }
     Some(package_count)
 }
+
+fn opkg() -> Option<usize> {
+    exec("opkg", ["list-installed"]).map(|i| i.lines().count())
+}
+
 pub async fn get_packages() -> Option<Packages> {
     tokio::task::spawn_blocking(|| {
         Some(Packages {
@@ -82,6 +93,7 @@ pub async fn get_packages() -> Option<Packages> {
             dpkg: dpkg().unwrap_or_default(),
             pacman: pacman().unwrap_or_default(),
             scoop: scoop().unwrap_or_default(),
+            opkg: opkg().unwrap_or_default(),
         })
     })
     .await
