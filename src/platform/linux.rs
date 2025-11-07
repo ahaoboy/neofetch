@@ -29,10 +29,22 @@ pub async fn read_meminfo() -> Result<HashMap<String, String>> {
 /// # Returns
 /// * `Result<HashMap<String, String>>` - Parsed OS release information
 pub async fn read_os_release() -> Result<HashMap<String, String>> {
-    use crate::utils::parse_key_value;
-
     let content = read_file_to_string("/etc/os-release").await?;
-    let mut info = parse_key_value(&content, '=');
+
+    // Parse key=value pairs
+    let mut info: HashMap<String, String> = content
+        .lines()
+        .filter_map(|line| {
+            let mut parts = line.splitn(2, '=');
+            let key = parts.next()?.trim();
+            let value = parts.next()?.trim();
+            if key.is_empty() {
+                None
+            } else {
+                Some((key.to_string(), value.to_string()))
+            }
+        })
+        .collect();
 
     // Remove quotes from values
     for value in info.values_mut() {
@@ -81,10 +93,16 @@ pub async fn get_cpu_core_count() -> Result<u32> {
     let content = read_sysfs("devices/system/cpu/present").await?;
 
     if let Some((start, end)) = content.trim().split_once('-') {
-        let start: u32 = start.parse()
-            .map_err(|e| NeofetchError::parse_error("cpu_start", e))?;
-        let end: u32 = end.parse()
-            .map_err(|e| NeofetchError::parse_error("cpu_end", e))?;
+        let start: u32 = start
+            .parse()
+            .map_err(|e: std::num::ParseIntError| {
+                NeofetchError::parse_error("cpu_start", e.to_string())
+            })?;
+        let end: u32 = end
+            .parse()
+            .map_err(|e: std::num::ParseIntError| {
+                NeofetchError::parse_error("cpu_end", e.to_string())
+            })?;
         Ok(end - start + 1)
     } else {
         Err(NeofetchError::parse_error("cpu_present", "invalid format"))
@@ -129,8 +147,12 @@ pub async fn read_thermal_zone_temp(zone_path: &str) -> Result<f32> {
     let temp_path = format!("{}/temp", zone_path);
     let content = read_file_to_string(&temp_path).await?;
 
-    let temp_millidegrees: i32 = content.trim().parse()
-        .map_err(|e| NeofetchError::parse_error("temperature", e))?;
+    let temp_millidegrees: i32 = content
+        .trim()
+        .parse()
+        .map_err(|e: std::num::ParseIntError| {
+            NeofetchError::parse_error("temperature", e.to_string())
+        })?;
 
     Ok(temp_millidegrees as f32 / 1000.0)
 }

@@ -142,7 +142,7 @@ pub async fn get_network_info() -> Result<Vec<NetworkInfo>> {
     }
 
     // Fallback to ifconfig (works on macOS and older Linux)
-    if let Ok(output) = execute_command("ifconfig", &[]).await {
+    if let Ok(output) = execute_command("ifconfig", &[] as &[&str]).await {
         let mut current_interface: Option<NetworkInfo> = None;
 
         for line in output.lines() {

@@ -93,13 +93,19 @@ pub async fn get_load_average() -> Result<LoadAverage> {
 
     let one_min = parts[0]
         .parse::<f32>()
-        .map_err(|e| NeofetchError::parse_error("load_1min", e))?;
+        .map_err(|e: std::num::ParseFloatError| {
+            NeofetchError::parse_error("load_1min", e.to_string())
+        })?;
     let five_min = parts[1]
         .parse::<f32>()
-        .map_err(|e| NeofetchError::parse_error("load_5min", e))?;
+        .map_err(|e: std::num::ParseFloatError| {
+            NeofetchError::parse_error("load_5min", e.to_string())
+        })?;
     let fifteen_min = parts[2]
         .parse::<f32>()
-        .map_err(|e| NeofetchError::parse_error("load_15min", e))?;
+        .map_err(|e: std::num::ParseFloatError| {
+            NeofetchError::parse_error("load_15min", e.to_string())
+        })?;
 
     Ok(LoadAverage {
         one_min,
@@ -131,7 +137,9 @@ pub async fn get_boot_time() -> Result<i64> {
         .next()
         .ok_or_else(|| NeofetchError::parse_error("btime", "missing value"))?
         .parse::<i64>()
-        .map_err(|e| NeofetchError::parse_error("btime", e))
+        .map_err(|e: std::num::ParseIntError| {
+            NeofetchError::parse_error("btime", e.to_string())
+        })
 }
 
 /// Get system boot time on Windows
