@@ -61,6 +61,7 @@ use crate::uptime::get_uptime;
 use crate::user::get_user;
 use crate::wm::{get_wm, get_wm_theme};
 use crate::{gpu::get_gpu, os::get_os};
+use crate::{network::get_network_info, temperature::get_temperature_sensors};
 
 pub fn join(left: String, right: String) -> String {
     let mut s = String::new();
@@ -169,8 +170,8 @@ impl Neofetch {
             get_battery(),
             get_hostname(),
             get_locale(),
-            temperature::get_temperature_sensors(),
-            network::get_network_info(),
+            get_temperature_sensors(),
+            get_network_info(),
         );
 
         // Get desktop environment based on OS
@@ -242,9 +243,10 @@ impl std::fmt::Display for Neofetch {
         }
 
         if let Ok(uptime) = &self.uptime
-            && uptime.0 > 0 {
-                info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
-            }
+            && uptime.0 > 0
+        {
+            info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+        }
 
         if let Ok(packages) = &self.packages {
             let s = packages.to_string();
@@ -319,12 +321,16 @@ impl std::fmt::Display for Neofetch {
         if let Ok(sensors) = &self.temperature
             && !sensors.is_empty()
         {
+            let k = "Temperature: ";
             // Show only the first few sensors to avoid clutter
             for (i, sensor) in sensors.iter().take(3).enumerate() {
                 if i == 0 {
-                    info.push_str(&format!("{GREEN}{BOLD}Temperature: {RESET}{sensor}\n"));
+                    info.push_str(&format!("{GREEN}{BOLD}{k}{RESET}{sensor}\n"));
                 } else {
-                    info.push_str(&format!("{GREEN}{BOLD}            {RESET}{sensor}\n"));
+                    info.push_str(&format!(
+                        "{GREEN}{BOLD}{}{RESET}{sensor}\n",
+                        " ".repeat(k.len()),
+                    ));
                 }
             }
         }
@@ -345,17 +351,19 @@ impl std::fmt::Display for Neofetch {
                 .collect();
 
             if !active_interfaces.is_empty() {
+                let k = "Network: ";
                 for (i, iface) in active_interfaces.iter().take(3).enumerate() {
                     let ip = iface.ipv4_address.as_ref().unwrap();
                     if i == 0 {
                         info.push_str(&format!(
-                            "{GREEN}{BOLD}Network: {RESET}{} ({})\n",
-                            iface.interface_name, ip
+                            "{GREEN}{BOLD}{k}{RESET}{} ({ip})\n",
+                            iface.interface_name,
                         ));
                     } else {
                         info.push_str(&format!(
-                            "{GREEN}{BOLD}         {RESET}{} ({})\n",
-                            iface.interface_name, ip
+                            "{GREEN}{BOLD}{}{RESET}{} ({ip})\n",
+                            " ".repeat(k.len()),
+                            iface.interface_name,
                         ));
                     }
                 }
