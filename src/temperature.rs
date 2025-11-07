@@ -85,26 +85,27 @@ async fn read_hwmon_sensors() -> Result<Vec<TempSensor>> {
                     let filename = temp_entry.file_name();
                     let filename_str = filename.to_string_lossy();
 
-                    if filename_str.starts_with("temp") && filename_str.ends_with("_input")
+                    if filename_str.starts_with("temp")
+                        && filename_str.ends_with("_input")
                         && let Ok(temp_str) = read_file_to_string(temp_entry.path()).await
-                            && let Ok(temp_millidegrees) = temp_str.trim().parse::<i32>() {
-                                let temp_celsius = temp_millidegrees as f32 / 1000.0;
+                        && let Ok(temp_millidegrees) = temp_str.trim().parse::<i32>()
+                    {
+                        let temp_celsius = temp_millidegrees as f32 / 1000.0;
 
-                                // Try to get label
-                                let label_file = filename_str.replace("_input", "_label");
-                                let label_path = hwmon_dir.join(&label_file);
-                                let label =
-                                    if let Ok(label_str) = read_file_to_string(&label_path).await {
-                                        label_str.trim().to_string()
-                                    } else {
-                                        filename_str.trim_end_matches("_input").to_string()
-                                    };
+                        // Try to get label
+                        let label_file = filename_str.replace("_input", "_label");
+                        let label_path = hwmon_dir.join(&label_file);
+                        let label = if let Ok(label_str) = read_file_to_string(&label_path).await {
+                            label_str.trim().to_string()
+                        } else {
+                            filename_str.trim_end_matches("_input").to_string()
+                        };
 
-                                sensors.push(TempSensor {
-                                    label,
-                                    temperature_celsius: temp_celsius,
-                                });
-                            }
+                        sensors.push(TempSensor {
+                            label,
+                            temperature_celsius: temp_celsius,
+                        });
+                    }
                 }
             }
         }

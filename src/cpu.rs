@@ -91,15 +91,17 @@ pub async fn get_cpu() -> Result<Cpu> {
 
     // Parse CPU frequency (MHz)
     if let Some(mhz_str) = cpuinfo.get("cpu MHz")
-        && let Ok(mhz) = mhz_str.parse::<f64>() {
-            cpu.speed = mhz as u32;
-        }
+        && let Ok(mhz) = mhz_str.parse::<f64>()
+    {
+        cpu.speed = mhz as u32;
+    }
 
     // Parse core count
     if let Some(cores_str) = cpuinfo.get("cpu cores")
-        && let Ok(cores) = cores_str.parse::<u32>() {
-            cpu.cores = cores;
-        }
+        && let Ok(cores) = cores_str.parse::<u32>()
+    {
+        cpu.cores = cores;
+    }
 
     Ok(cpu)
 }

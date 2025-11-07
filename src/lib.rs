@@ -318,16 +318,17 @@ impl std::fmt::Display for Neofetch {
         }
         // Handle temperature sensors (Result type)
         if let Ok(sensors) = &self.temperature
-            && !sensors.is_empty() {
-                // Show only the first few sensors to avoid clutter
-                for (i, sensor) in sensors.iter().take(3).enumerate() {
-                    if i == 0 {
-                        info.push_str(&format!("{GREEN}{BOLD}Temperature: {RESET}{sensor}\n"));
-                    } else {
-                        info.push_str(&format!("{GREEN}{BOLD}            {RESET}{sensor}\n"));
-                    }
+            && !sensors.is_empty()
+        {
+            // Show only the first few sensors to avoid clutter
+            for (i, sensor) in sensors.iter().take(3).enumerate() {
+                if i == 0 {
+                    info.push_str(&format!("{GREEN}{BOLD}Temperature: {RESET}{sensor}\n"));
+                } else {
+                    info.push_str(&format!("{GREEN}{BOLD}            {RESET}{sensor}\n"));
                 }
             }
+        }
         if let Some(battery) = &self.battery {
             info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
         }
