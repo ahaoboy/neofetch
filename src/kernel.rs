@@ -8,8 +8,8 @@ use crate::error::{NeofetchError, Result};
 #[cfg(windows)]
 pub async fn get_kernel() -> Result<String> {
     use serde::Deserialize;
-    use winreg::enums::*;
     use winreg::RegKey;
+    use winreg::enums::*;
 
     #[derive(Deserialize, Debug, Clone)]
     #[serde(rename = "Win32_OperatingSystem")]

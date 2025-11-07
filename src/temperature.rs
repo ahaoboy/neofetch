@@ -23,7 +23,9 @@ impl Display for TempSensor {
 /// Get temperature sensors on Linux
 #[cfg(target_os = "linux")]
 pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
-    use crate::platform::linux::{get_thermal_zones, read_thermal_zone_temp, read_thermal_zone_type};
+    use crate::platform::linux::{
+        get_thermal_zones, read_thermal_zone_temp, read_thermal_zone_type,
+    };
 
     let zones = get_thermal_zones()?;
     let mut sensors = Vec::new();
@@ -32,13 +34,7 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
         if let Ok(temp) = read_thermal_zone_temp(&zone_path).await {
             let label = read_thermal_zone_type(&zone_path)
                 .await
-                .unwrap_or_else(|_| {
-                    zone_path
-                        .split('/')
-                        .last()
-                        .unwrap_or("unknown")
-                        .to_string()
-                });
+                .unwrap_or_else(|_| zone_path.split('/').last().unwrap_or("unknown").to_string());
 
             sensors.push(TempSensor {
                 label,
@@ -53,7 +49,9 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     }
 
     if sensors.is_empty() {
-        return Err(NeofetchError::data_unavailable("No temperature sensors found"));
+        return Err(NeofetchError::data_unavailable(
+            "No temperature sensors found",
+        ));
     }
 
     Ok(sensors)
@@ -89,11 +87,12 @@ async fn read_hwmon_sensors() -> Result<Vec<TempSensor>> {
                                 // Try to get label
                                 let label_file = filename_str.replace("_input", "_label");
                                 let label_path = hwmon_dir.join(&label_file);
-                                let label = if let Ok(label_str) = read_file_to_string(&label_path).await {
-                                    label_str.trim().to_string()
-                                } else {
-                                    filename_str.trim_end_matches("_input").to_string()
-                                };
+                                let label =
+                                    if let Ok(label_str) = read_file_to_string(&label_path).await {
+                                        label_str.trim().to_string()
+                                    } else {
+                                        filename_str.trim_end_matches("_input").to_string()
+                                    };
 
                                 sensors.push(TempSensor {
                                     label,
@@ -117,7 +116,9 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
 
     let thermal_path = std::path::Path::new("/sys/class/thermal");
     if !thermal_path.exists() {
-        return Err(NeofetchError::data_unavailable("Thermal sensors not available"));
+        return Err(NeofetchError::data_unavailable(
+            "Thermal sensors not available",
+        ));
     }
 
     let mut sensors = Vec::new();
@@ -153,7 +154,9 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     }
 
     if sensors.is_empty() {
-        return Err(NeofetchError::data_unavailable("No temperature sensors found"));
+        return Err(NeofetchError::data_unavailable(
+            "No temperature sensors found",
+        ));
     }
 
     Ok(sensors)
@@ -165,7 +168,9 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     use crate::utils::execute_command_optional;
 
     // Try using powermetrics (requires sudo, may not work)
-    if let Some(output) = execute_command_optional("powermetrics", &["--samplers", "smc", "-i1", "-n1"]).await {
+    if let Some(output) =
+        execute_command_optional("powermetrics", &["--samplers", "smc", "-i1", "-n1"]).await
+    {
         let mut sensors = Vec::new();
 
         for line in output.lines() {
@@ -201,7 +206,7 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     }
 
     Err(NeofetchError::data_unavailable(
-        "Temperature sensors not available (try installing osx-cpu-temp)"
+        "Temperature sensors not available (try installing osx-cpu-temp)",
     ))
 }
 
@@ -251,7 +256,7 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
 
     if sensors.is_empty() {
         return Err(NeofetchError::data_unavailable(
-            "Temperature sensors not available via WMI"
+            "Temperature sensors not available via WMI",
         ));
     }
 
@@ -276,7 +281,10 @@ pub async fn get_cpu_temperature() -> Result<f32> {
     // Try to find CPU-related sensor
     for sensor in &sensors {
         let label_lower = sensor.label.to_lowercase();
-        if label_lower.contains("cpu") || label_lower.contains("core") || label_lower.contains("package") {
+        if label_lower.contains("cpu")
+            || label_lower.contains("core")
+            || label_lower.contains("package")
+        {
             return Ok(sensor.temperature_celsius);
         }
     }

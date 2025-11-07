@@ -9,5 +9,5 @@ pub mod process;
 
 // Re-export commonly used functions
 pub use file::{parse_proc_file, read_file_to_string, read_file_to_string_sync};
-pub use platform::{current_platform, is_platform_available, Platform};
+pub use platform::{Platform, current_platform, is_platform_available};
 pub use process::{execute_command, execute_command_optional, execute_command_sync};

@@ -34,8 +34,9 @@ use winreg::HKEY;
 pub async fn wmi_query<T: DeserializeOwned>() -> Result<Vec<T>> {
     use wmi::{COMLibrary, WMIConnection};
 
-    let com = COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM library: {}", e)))?;
+    let com = COMLibrary::new().map_err(|e| {
+        NeofetchError::wmi_error(format!("Failed to initialize COM library: {}", e))
+    })?;
 
     let wmi_con = WMIConnection::new(com)
         .map_err(|e| NeofetchError::wmi_error(format!("Failed to create WMI connection: {}", e)))?;
@@ -58,8 +59,9 @@ pub async fn wmi_query<T: DeserializeOwned>() -> Result<Vec<T>> {
 pub async fn wmi_query_with_filter<T: DeserializeOwned>(query: &str) -> Result<Vec<T>> {
     use wmi::{COMLibrary, WMIConnection};
 
-    let com = COMLibrary::new()
-        .map_err(|e| NeofetchError::wmi_error(format!("Failed to initialize COM library: {}", e)))?;
+    let com = COMLibrary::new().map_err(|e| {
+        NeofetchError::wmi_error(format!("Failed to initialize COM library: {}", e))
+    })?;
 
     let wmi_con = WMIConnection::new(com)
         .map_err(|e| NeofetchError::wmi_error(format!("Failed to create WMI connection: {}", e)))?;
@@ -80,18 +82,12 @@ pub async fn wmi_query_with_filter<T: DeserializeOwned>(query: &str) -> Result<V
 ///
 /// # Returns
 /// * `Result<String>` - Registry value as string
-pub fn get_registry_string(
-    hive: HKEY,
-    path: &str,
-    value_name: &str,
-) -> Result<String> {
+pub fn get_registry_string(hive: HKEY, path: &str, value_name: &str) -> Result<String> {
     use winreg::RegKey;
 
-    let key = RegKey::predef(hive)
-        .open_subkey(path)
-        .map_err(|e| {
-            NeofetchError::system_call(format!("Failed to open registry key '{}': {}", path, e))
-        })?;
+    let key = RegKey::predef(hive).open_subkey(path).map_err(|e| {
+        NeofetchError::system_call(format!("Failed to open registry key '{}': {}", path, e))
+    })?;
 
     key.get_value::<String, _>(value_name).map_err(|e| {
         NeofetchError::system_call(format!(
@@ -117,7 +113,9 @@ pub fn get_windows_version() -> Result<String> {
         return Ok(release_id);
     }
 
-    Err(NeofetchError::data_unavailable("Windows version not found in registry"))
+    Err(NeofetchError::data_unavailable(
+        "Windows version not found in registry",
+    ))
 }
 
 #[cfg(test)]

@@ -50,7 +50,8 @@ impl Platform {
         {
             // Check for OpenWrt
             if std::path::Path::new("/etc/openwrt_release").exists()
-                || std::path::Path::new("/etc/openwrt_version").exists() {
+                || std::path::Path::new("/etc/openwrt_version").exists()
+            {
                 return Platform::OpenWrt;
             }
             return Platform::Linux;
@@ -101,7 +102,10 @@ impl Platform {
 
     /// Check if the platform is Linux-based
     pub fn is_linux_based(&self) -> bool {
-        matches!(self, Platform::Linux | Platform::Android | Platform::OpenWrt)
+        matches!(
+            self,
+            Platform::Linux | Platform::Android | Platform::OpenWrt
+        )
     }
 
     /// Check if the platform is BSD-based

@@ -93,16 +93,12 @@ pub async fn get_cpu_core_count() -> Result<u32> {
     let content = read_sysfs("devices/system/cpu/present").await?;
 
     if let Some((start, end)) = content.trim().split_once('-') {
-        let start: u32 = start
-            .parse()
-            .map_err(|e: std::num::ParseIntError| {
-                NeofetchError::parse_error("cpu_start", e.to_string())
-            })?;
-        let end: u32 = end
-            .parse()
-            .map_err(|e: std::num::ParseIntError| {
-                NeofetchError::parse_error("cpu_end", e.to_string())
-            })?;
+        let start: u32 = start.parse().map_err(|e: std::num::ParseIntError| {
+            NeofetchError::parse_error("cpu_start", e.to_string())
+        })?;
+        let end: u32 = end.parse().map_err(|e: std::num::ParseIntError| {
+            NeofetchError::parse_error("cpu_end", e.to_string())
+        })?;
         Ok(end - start + 1)
     } else {
         Err(NeofetchError::parse_error("cpu_present", "invalid format"))
@@ -166,7 +162,9 @@ pub async fn read_thermal_zone_temp(zone_path: &str) -> Result<f32> {
 /// * `Result<String>` - Thermal zone type
 pub async fn read_thermal_zone_type(zone_path: &str) -> Result<String> {
     let type_path = format!("{}/type", zone_path);
-    read_file_to_string(&type_path).await.map(|s| s.trim().to_string())
+    read_file_to_string(&type_path)
+        .await
+        .map(|s| s.trim().to_string())
 }
 
 #[cfg(test)]

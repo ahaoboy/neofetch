@@ -85,10 +85,7 @@ pub async fn get_load_average() -> Result<LoadAverage> {
     let parts: Vec<&str> = content.split_whitespace().collect();
 
     if parts.len() < 3 {
-        return Err(NeofetchError::parse_error(
-            "loadavg",
-            "insufficient data",
-        ));
+        return Err(NeofetchError::parse_error("loadavg", "insufficient data"));
     }
 
     let one_min = parts[0]
@@ -137,9 +134,7 @@ pub async fn get_boot_time() -> Result<i64> {
         .next()
         .ok_or_else(|| NeofetchError::parse_error("btime", "missing value"))?
         .parse::<i64>()
-        .map_err(|e: std::num::ParseIntError| {
-            NeofetchError::parse_error("btime", e.to_string())
-        })
+        .map_err(|e: std::num::ParseIntError| NeofetchError::parse_error("btime", e.to_string()))
 }
 
 /// Get system boot time on Windows

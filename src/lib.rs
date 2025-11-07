@@ -29,10 +29,10 @@ pub mod utils;
 pub mod wm;
 
 // Re-export commonly used types
-pub use error::{NeofetchError, Result};
 use cpu::Cpu;
 use disk::Disk;
 use display::{Display, get_display};
+pub use error::{NeofetchError, Result};
 use gpu::Gpu;
 use hostname::get_hostname;
 use os::OS;
@@ -118,6 +118,8 @@ pub struct Neofetch {
     pub battery: Option<u32>,
     pub locale: Option<String>,
     pub ip: Option<String>,
+    pub temperature: Result<Vec<temperature::TempSensor>>,
+    pub network: Result<Vec<network::NetworkInfo>>,
 }
 
 impl Neofetch {
@@ -144,6 +146,8 @@ impl Neofetch {
             battery,
             hostname,
             locale,
+            temperature,
+            network,
         ) = tokio::join!(
             which_shell(),
             get_os(),
@@ -165,6 +169,8 @@ impl Neofetch {
             get_battery(),
             get_hostname(),
             get_locale(),
+            temperature::get_temperature_sensors(),
+            network::get_network_info(),
         );
 
         // Get desktop environment based on OS
@@ -194,6 +200,8 @@ impl Neofetch {
             hostname,
             locale,
             ip,
+            temperature,
+            network,
         }
     }
 }
@@ -308,13 +316,50 @@ impl std::fmt::Display for Neofetch {
         if let Ok(memory) = &self.memory {
             info.push_str(&format!("{GREEN}{BOLD}Memory: {RESET}{memory}\n"));
         }
-
+        // Handle temperature sensors (Result type)
+        if let Ok(sensors) = &self.temperature
+            && !sensors.is_empty() {
+                // Show only the first few sensors to avoid clutter
+                for (i, sensor) in sensors.iter().take(3).enumerate() {
+                    if i == 0 {
+                        info.push_str(&format!("{GREEN}{BOLD}Temperature: {RESET}{sensor}\n"));
+                    } else {
+                        info.push_str(&format!("{GREEN}{BOLD}            {RESET}{sensor}\n"));
+                    }
+                }
+            }
         if let Some(battery) = &self.battery {
             info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
         }
 
         if let Some(ip) = &self.ip {
             info.push_str(&format!("{GREEN}{BOLD}Local IP: {RESET}{ip}\n"));
+        }
+
+        // Handle network interfaces (Result type)
+        if let Ok(interfaces) = &self.network {
+            // Show only active interfaces with IP addresses
+            let active_interfaces: Vec<_> = interfaces
+                .iter()
+                .filter(|iface| iface.is_up && iface.ipv4_address.is_some())
+                .collect();
+
+            if !active_interfaces.is_empty() {
+                for (i, iface) in active_interfaces.iter().take(3).enumerate() {
+                    let ip = iface.ipv4_address.as_ref().unwrap();
+                    if i == 0 {
+                        info.push_str(&format!(
+                            "{GREEN}{BOLD}Network: {RESET}{} ({})\n",
+                            iface.interface_name, ip
+                        ));
+                    } else {
+                        info.push_str(&format!(
+                            "{GREEN}{BOLD}         {RESET}{} ({})\n",
+                            iface.interface_name, ip
+                        ));
+                    }
+                }
+            }
         }
 
         if let Some(locale) = &self.locale {

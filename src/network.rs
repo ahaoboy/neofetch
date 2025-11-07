@@ -196,7 +196,9 @@ pub async fn get_network_info() -> Result<Vec<NetworkInfo>> {
     }
 
     if interfaces.is_empty() {
-        return Err(NeofetchError::data_unavailable("No network interfaces found"));
+        return Err(NeofetchError::data_unavailable(
+            "No network interfaces found",
+        ));
     }
 
     Ok(interfaces)

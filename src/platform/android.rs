@@ -113,8 +113,7 @@ pub fn get_rom_display_id() -> Result<String> {
 /// Get baseband version
 #[cfg(target_os = "android")]
 pub fn get_baseband_version() -> Result<String> {
-    get_property("ro.baseband")
-        .or_else(|_| get_property("gsm.version.baseband"))
+    get_property("ro.baseband").or_else(|_| get_property("gsm.version.baseband"))
 }
 
 /// Get kernel version from /proc/version
@@ -132,7 +131,10 @@ pub async fn get_kernel_version() -> Result<String> {
         }
     }
 
-    Err(NeofetchError::parse_error("kernel_version", "invalid format"))
+    Err(NeofetchError::parse_error(
+        "kernel_version",
+        "invalid format",
+    ))
 }
 
 /// Read CPU frequency for a specific core
@@ -140,10 +142,15 @@ pub async fn get_kernel_version() -> Result<String> {
 pub async fn get_cpu_freq(core: u32) -> Result<u32> {
     use crate::utils::read_file_to_string;
 
-    let freq_path = format!("/sys/devices/system/cpu/cpu{}/cpufreq/scaling_cur_freq", core);
+    let freq_path = format!(
+        "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_cur_freq",
+        core
+    );
     let content = read_file_to_string(&freq_path).await?;
 
-    content.trim().parse()
+    content
+        .trim()
+        .parse()
         .map_err(|e| NeofetchError::parse_error("cpu_frequency", e))
 }
 
@@ -161,7 +168,9 @@ pub async fn get_avg_cpu_freq(core_count: u32) -> Result<u32> {
     }
 
     if valid_cores == 0 {
-        return Err(NeofetchError::data_unavailable("No CPU frequency data available"));
+        return Err(NeofetchError::data_unavailable(
+            "No CPU frequency data available",
+        ));
     }
 
     Ok((total_freq / valid_cores as u64) as u32)
