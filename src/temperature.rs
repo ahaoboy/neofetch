@@ -20,6 +20,156 @@ impl Display for TempSensor {
     }
 }
 
+/// Temperature sensor category
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SensorCategory {
+    Cpu,
+    Gpu,
+    Battery,
+}
+
+/// Temperature validation constants
+const MIN_TEMP: f32 = 0.0; // Minimum valid temperature (Celsius)
+const MAX_TEMP: f32 = 120.0; // Maximum valid temperature (Celsius)
+
+/// Classify a sensor label into a category
+fn classify_sensor(label: &str) -> Option<SensorCategory> {
+    let label_lower = label.to_lowercase();
+
+    // CPU sensors
+    if label_lower.contains("cpu")
+        || label_lower.contains("core")
+        || label_lower.contains("package")
+        || label_lower.contains("processor")
+        || label_lower.contains("k10temp")
+        || label_lower.contains("coretemp")
+        || label_lower.contains("x86_pkg")
+        || label_lower.contains("tctl")
+        || label_lower.contains("tdie")
+        || label_lower.contains("tsens")
+        || label_lower.contains("cluster")
+        || label_lower.contains("silver")
+        || label_lower.contains("gold")
+        || label_lower.contains("prime")
+        || label_lower.contains("tz")
+        || label_lower.contains("thermal")
+    {
+        return Some(SensorCategory::Cpu);
+    }
+
+    // GPU sensors
+    if label_lower.contains("gpu")
+        || label_lower.contains("gpuss")
+        || label_lower.contains("kgsl")
+        || label_lower.contains("radeon")
+        || label_lower.contains("amdgpu")
+        || label_lower.contains("nvidia")
+        || label_lower.contains("nouveau")
+        || label_lower.contains("edge")
+        || label_lower.contains("junction")
+        || label_lower.contains("graphics")
+        || label_lower.contains("video")
+        || label_lower.contains("display")
+    {
+        return Some(SensorCategory::Gpu);
+    }
+
+    // Battery sensors
+    if label_lower.contains("battery")
+        || label_lower.contains("batt")
+        || label_lower.contains("charger")
+        || label_lower.contains("acpi")
+    {
+        return Some(SensorCategory::Battery);
+    }
+
+    None
+}
+
+/// Check if temperature is valid
+fn is_valid_temp(temp: f32) -> bool {
+    (MIN_TEMP..=MAX_TEMP).contains(&temp)
+}
+
+/// Aggregate temperatures by category and create averaged sensors
+fn aggregate_temperatures(
+    cpu_temps: Vec<f32>,
+    gpu_temps: Vec<f32>,
+    battery_temps: Vec<f32>,
+) -> Result<Vec<TempSensor>> {
+    let mut sensors = Vec::new();
+
+    // Calculate and add CPU average (ordered first)
+    if !cpu_temps.is_empty() {
+        let avg_temp = cpu_temps.iter().sum::<f32>() / cpu_temps.len() as f32;
+        sensors.push(TempSensor {
+            label: format!("CPU (avg of {} sensors)", cpu_temps.len()),
+            temperature_celsius: avg_temp,
+        });
+    }
+
+    // Calculate and add GPU average (ordered second)
+    if !gpu_temps.is_empty() {
+        let avg_temp = gpu_temps.iter().sum::<f32>() / gpu_temps.len() as f32;
+        sensors.push(TempSensor {
+            label: format!("GPU (avg of {} sensors)", gpu_temps.len()),
+            temperature_celsius: avg_temp,
+        });
+    }
+
+    // Calculate and add Battery average (ordered third)
+    if !battery_temps.is_empty() {
+        let avg_temp = battery_temps.iter().sum::<f32>() / battery_temps.len() as f32;
+        sensors.push(TempSensor {
+            label: format!("Battery (avg of {} sensors)", battery_temps.len()),
+            temperature_celsius: avg_temp,
+        });
+    }
+
+    if sensors.is_empty() {
+        return Err(NeofetchError::data_unavailable(
+            "No valid temperature sensors found",
+        ));
+    }
+
+    Ok(sensors)
+}
+
+/// Collect and categorize temperature readings
+struct TempCollector {
+    cpu_temps: Vec<f32>,
+    gpu_temps: Vec<f32>,
+    battery_temps: Vec<f32>,
+}
+
+impl TempCollector {
+    fn new() -> Self {
+        Self {
+            cpu_temps: Vec::new(),
+            gpu_temps: Vec::new(),
+            battery_temps: Vec::new(),
+        }
+    }
+
+    fn add_reading(&mut self, label: &str, temp: f32) {
+        if !is_valid_temp(temp) {
+            return;
+        }
+
+        if let Some(category) = classify_sensor(label) {
+            match category {
+                SensorCategory::Cpu => self.cpu_temps.push(temp),
+                SensorCategory::Gpu => self.gpu_temps.push(temp),
+                SensorCategory::Battery => self.battery_temps.push(temp),
+            }
+        }
+    }
+
+    fn into_sensors(self) -> Result<Vec<TempSensor>> {
+        aggregate_temperatures(self.cpu_temps, self.gpu_temps, self.battery_temps)
+    }
+}
+
 /// Get temperature sensors on Linux
 #[cfg(target_os = "linux")]
 pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
@@ -27,40 +177,35 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
         get_thermal_zones, read_thermal_zone_temp, read_thermal_zone_type,
     };
 
-    let zones = get_thermal_zones()?;
-    let mut sensors = Vec::new();
+    let mut collector = TempCollector::new();
 
-    for zone_path in zones {
-        if let Ok(temp) = read_thermal_zone_temp(&zone_path).await {
-            let label = read_thermal_zone_type(&zone_path)
-                .await
-                .unwrap_or_else(|_| {
-                    zone_path
-                        .split('/')
-                        .next_back()
-                        .unwrap_or("unknown")
-                        .to_string()
-                });
+    // Read thermal zones
+    if let Ok(zones) = get_thermal_zones() {
+        for zone_path in zones {
+            if let Ok(temp) = read_thermal_zone_temp(&zone_path).await {
+                let label = read_thermal_zone_type(&zone_path)
+                    .await
+                    .unwrap_or_else(|_| {
+                        zone_path
+                            .split('/')
+                            .next_back()
+                            .unwrap_or("unknown")
+                            .to_string()
+                    });
 
-            sensors.push(TempSensor {
-                label,
-                temperature_celsius: temp,
-            });
+                collector.add_reading(&label, temp);
+            }
         }
     }
 
     // Also try hwmon sensors
     if let Ok(hwmon_sensors) = read_hwmon_sensors().await {
-        sensors.extend(hwmon_sensors);
+        for sensor in hwmon_sensors {
+            collector.add_reading(&sensor.label, sensor.temperature_celsius);
+        }
     }
 
-    if sensors.is_empty() {
-        return Err(NeofetchError::data_unavailable(
-            "No temperature sensors found",
-        ));
-    }
-
-    Ok(sensors)
+    collector.into_sensors()
 }
 
 /// Read hwmon temperature sensors (Linux)
@@ -126,12 +271,7 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
         ));
     }
 
-    const MIN_TEMP: f32 = 0.0; // Minimum valid temperature (Celsius)
-    const MAX_TEMP: f32 = 120.0; // Maximum valid temperature (Celsius)
-
-    let mut cpu_temps = Vec::new();
-    let mut gpu_temps = Vec::new();
-    let mut battery_temps = Vec::new();
+    let mut collector = TempCollector::new();
 
     if let Ok(entries) = std::fs::read_dir(thermal_path) {
         for entry in entries.flatten() {
@@ -155,86 +295,17 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
                 Err(_) => continue,
             };
 
-            // Skip invalid temperatures (including -273°C which indicates sensor not active)
-            if temp_celsius < MIN_TEMP || temp_celsius > MAX_TEMP {
-                continue;
-            }
-
             // Read sensor type/label
             let label = match read_file_to_string(&type_file).await {
                 Ok(type_str) => type_str.trim().to_string(),
                 Err(_) => continue,
             };
 
-            // Classify sensor by type and collect temperatures
-            let label_lower = label.to_lowercase();
-
-            // CPU sensors: cpu, core, tsens (thermal sensor), cluster, silver, gold, prime
-            if label_lower.contains("cpu")
-                || label_lower.contains("core")
-                || label_lower.contains("tsens")
-                || label_lower.contains("cluster")
-                || label_lower.contains("silver")
-                || label_lower.contains("gold")
-                || label_lower.contains("prime")
-            {
-                cpu_temps.push(temp_celsius);
-            }
-            // GPU sensors: gpu, gpuss (GPU subsystem), kgsl (Kernel Graphics Support Layer)
-            else if label_lower.contains("gpu")
-                || label_lower.contains("gpuss")
-                || label_lower.contains("kgsl")
-            {
-                gpu_temps.push(temp_celsius);
-            }
-            // Battery sensors: battery, batt, charger
-            else if label_lower.contains("battery")
-                || label_lower.contains("batt")
-                || label_lower.contains("charger")
-            {
-                battery_temps.push(temp_celsius);
-            }
-            // Note: Sensors like xoagg_therm (XO aggregate), sdr0_pa (SDR power amplifier),
-            // modem, wifi, camera, etc. are not included in the main categories
+            collector.add_reading(&label, temp_celsius);
         }
     }
 
-    let mut sensors = Vec::new();
-
-    // Calculate and add CPU average (ordered first)
-    if !cpu_temps.is_empty() {
-        let avg_temp = cpu_temps.iter().sum::<f32>() / cpu_temps.len() as f32;
-        sensors.push(TempSensor {
-            label: format!("CPU (avg of {} sensors)", cpu_temps.len()),
-            temperature_celsius: avg_temp,
-        });
-    }
-
-    // Calculate and add GPU average (ordered second)
-    if !gpu_temps.is_empty() {
-        let avg_temp = gpu_temps.iter().sum::<f32>() / gpu_temps.len() as f32;
-        sensors.push(TempSensor {
-            label: format!("GPU (avg of {} sensors)", gpu_temps.len()),
-            temperature_celsius: avg_temp,
-        });
-    }
-
-    // Calculate and add Battery average (ordered third)
-    if !battery_temps.is_empty() {
-        let avg_temp = battery_temps.iter().sum::<f32>() / battery_temps.len() as f32;
-        sensors.push(TempSensor {
-            label: format!("Battery (avg of {} sensors)", battery_temps.len()),
-            temperature_celsius: avg_temp,
-        });
-    }
-
-    if sensors.is_empty() {
-        return Err(NeofetchError::data_unavailable(
-            "No valid temperature sensors found",
-        ));
-    }
-
-    Ok(sensors)
+    collector.into_sensors()
 }
 
 /// Get temperature sensors on macOS
@@ -242,47 +313,43 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
 pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
     use crate::utils::execute_command_optional;
 
+    let mut collector = TempCollector::new();
+
     // Try using powermetrics (requires sudo, may not work)
     if let Some(output) =
         execute_command_optional("powermetrics", &["--samplers", "smc", "-i1", "-n1"]).await
     {
-        let mut sensors = Vec::new();
-
         for line in output.lines() {
-            if line.contains("CPU die temperature") {
-                if let Some(temp_str) = line.split(':').nth(1) {
-                    if let Some(temp_val) = temp_str.trim().split_whitespace().next() {
-                        if let Ok(temp) = temp_val.parse::<f32>() {
-                            sensors.push(TempSensor {
-                                label: "CPU".to_string(),
-                                temperature_celsius: temp,
-                            });
-                        }
+            // Parse different temperature sensors from powermetrics
+            if let Some(colon_pos) = line.find(':') {
+                let label = line[..colon_pos].trim();
+                let value_part = line[colon_pos + 1..].trim();
+
+                if let Some(temp_val) = value_part.split_whitespace().next() {
+                    if let Ok(temp) = temp_val.parse::<f32>() {
+                        collector.add_reading(label, temp);
                     }
                 }
             }
         }
-
-        if !sensors.is_empty() {
-            return Ok(sensors);
-        }
     }
 
-    // Try using osx-cpu-temp if available
-    if let Some(output) = execute_command_optional("osx-cpu-temp", &[] as &[&str]).await {
-        if let Some(temp_str) = output.split('°').next() {
-            if let Ok(temp) = temp_str.trim().parse::<f32>() {
-                return Ok(vec![TempSensor {
-                    label: "CPU".to_string(),
-                    temperature_celsius: temp,
-                }]);
+    // Try using osx-cpu-temp if available (fallback for CPU only)
+    if collector.cpu_temps.is_empty() {
+        if let Some(output) = execute_command_optional("osx-cpu-temp", &[] as &[&str]).await {
+            if let Some(temp_str) = output.split('°').next() {
+                if let Ok(temp) = temp_str.trim().parse::<f32>() {
+                    collector.add_reading("CPU", temp);
+                }
             }
         }
     }
 
-    Err(NeofetchError::data_unavailable(
-        "Temperature sensors not available (try installing osx-cpu-temp)",
-    ))
+    collector.into_sensors().map_err(|_| {
+        NeofetchError::data_unavailable(
+            "Temperature sensors not available (try installing osx-cpu-temp or run with sudo for powermetrics)",
+        )
+    })
 }
 
 /// Get temperature sensors on Windows
@@ -301,94 +368,24 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
         instance_name: String,
     }
 
-    const MIN_TEMP: f32 = 0.0; // Minimum valid temperature (Celsius)
-    const MAX_TEMP: f32 = 120.0; // Maximum valid temperature (Celsius)
-
     // Try WMI thermal zone query (limited support on Windows)
     let results: Vec<ThermalZoneTemperature> = wmi_query_with_ns("root\\wmi")
         .await
         .map_err(|e| NeofetchError::wmi_error(format!("WMI query failed: {}", e)))?;
 
-    let mut cpu_temps = Vec::new();
-    let mut gpu_temps = Vec::new();
-    let mut battery_temps = Vec::new();
+    let mut collector = TempCollector::new();
 
     for zone in results {
         // WMI returns temperature in tenths of Kelvin
         let temp_kelvin = zone.current_temperature as f32 / 10.0;
         let temp_celsius = temp_kelvin - 273.15;
 
-        // Skip invalid temperatures
-        if !(MIN_TEMP..=MAX_TEMP).contains(&temp_celsius) {
-            continue;
-        }
-
-        // Classify sensor by instance name
-        let name_lower = zone.instance_name.to_lowercase();
-
-        // CPU sensors: cpu, processor, core, package
-        if name_lower.contains("cpu")
-            || name_lower.contains("processor")
-            || name_lower.contains("core")
-            || name_lower.contains("package")
-        {
-            cpu_temps.push(temp_celsius);
-        }
-        // GPU sensors: gpu, graphics, video, display adapter
-        else if name_lower.contains("gpu")
-            || name_lower.contains("graphics")
-            || name_lower.contains("video")
-            || name_lower.contains("display")
-        {
-            gpu_temps.push(temp_celsius);
-        }
-        // Battery sensors: battery, batt, acpi
-        else if name_lower.contains("battery") || name_lower.contains("batt") {
-            battery_temps.push(temp_celsius);
-        }
-        // If no specific category, try to infer from thermal zone naming
-        else if name_lower.contains("tz") || name_lower.contains("thermal") {
-            // Generic thermal zones - classify as CPU by default
-            cpu_temps.push(temp_celsius);
-        }
+        collector.add_reading(&zone.instance_name, temp_celsius);
     }
 
-    let mut sensors = Vec::new();
-
-    // Calculate and add CPU average (ordered first)
-    if !cpu_temps.is_empty() {
-        let avg_temp = cpu_temps.iter().sum::<f32>() / cpu_temps.len() as f32;
-        sensors.push(TempSensor {
-            label: format!("CPU (avg of {} sensors)", cpu_temps.len()),
-            temperature_celsius: avg_temp,
-        });
-    }
-
-    // Calculate and add GPU average (ordered second)
-    if !gpu_temps.is_empty() {
-        let avg_temp = gpu_temps.iter().sum::<f32>() / gpu_temps.len() as f32;
-        sensors.push(TempSensor {
-            label: format!("GPU (avg of {} sensors)", gpu_temps.len()),
-            temperature_celsius: avg_temp,
-        });
-    }
-
-    // Calculate and add Battery average (ordered third)
-    if !battery_temps.is_empty() {
-        let avg_temp = battery_temps.iter().sum::<f32>() / battery_temps.len() as f32;
-        sensors.push(TempSensor {
-            label: format!("Battery (avg of {} sensors)", battery_temps.len()),
-            temperature_celsius: avg_temp,
-        });
-    }
-
-    if sensors.is_empty() {
-        return Err(NeofetchError::data_unavailable(
-            "No valid temperature sensors found via WMI",
-        ));
-    }
-
-    Ok(sensors)
+    collector
+        .into_sensors()
+        .map_err(|_| NeofetchError::data_unavailable("No valid temperature sensors found via WMI"))
 }
 
 /// Get temperature sensors (unsupported platforms)
