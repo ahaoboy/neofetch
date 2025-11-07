@@ -54,7 +54,7 @@ impl Platform {
             {
                 return Platform::OpenWrt;
             }
-            return Platform::Linux;
+            Platform::Linux
         }
 
         #[cfg(target_os = "macos")]

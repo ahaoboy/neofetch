@@ -34,7 +34,13 @@ pub async fn get_temperature_sensors() -> Result<Vec<TempSensor>> {
         if let Ok(temp) = read_thermal_zone_temp(&zone_path).await {
             let label = read_thermal_zone_type(&zone_path)
                 .await
-                .unwrap_or_else(|_| zone_path.split('/').last().unwrap_or("unknown").to_string());
+                .unwrap_or_else(|_| {
+                    zone_path
+                        .split('/')
+                        .next_back()
+                        .unwrap_or("unknown")
+                        .to_string()
+                });
 
             sensors.push(TempSensor {
                 label,
@@ -79,9 +85,9 @@ async fn read_hwmon_sensors() -> Result<Vec<TempSensor>> {
                     let filename = temp_entry.file_name();
                     let filename_str = filename.to_string_lossy();
 
-                    if filename_str.starts_with("temp") && filename_str.ends_with("_input") {
-                        if let Ok(temp_str) = read_file_to_string(temp_entry.path()).await {
-                            if let Ok(temp_millidegrees) = temp_str.trim().parse::<i32>() {
+                    if filename_str.starts_with("temp") && filename_str.ends_with("_input")
+                        && let Ok(temp_str) = read_file_to_string(temp_entry.path()).await
+                            && let Ok(temp_millidegrees) = temp_str.trim().parse::<i32>() {
                                 let temp_celsius = temp_millidegrees as f32 / 1000.0;
 
                                 // Try to get label
@@ -99,8 +105,6 @@ async fn read_hwmon_sensors() -> Result<Vec<TempSensor>> {
                                     temperature_celsius: temp_celsius,
                                 });
                             }
-                        }
-                    }
                 }
             }
         }

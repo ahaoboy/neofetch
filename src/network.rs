@@ -179,14 +179,13 @@ pub async fn get_network_info() -> Result<Vec<NetworkInfo>> {
                             interface.ipv6_address = Some(addr.to_string());
                         }
                     }
-                } else if line.contains("ether ") {
-                    if let Some(mac_start) = line.find("ether ") {
+                } else if line.contains("ether ")
+                    && let Some(mac_start) = line.find("ether ") {
                         let mac_part = &line[mac_start + 6..];
                         if let Some(mac) = mac_part.split_whitespace().next() {
                             interface.mac_address = Some(mac.to_string());
                         }
                     }
-                }
             }
         }
 
