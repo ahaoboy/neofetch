@@ -281,10 +281,10 @@ impl std::fmt::Display for Neofetch {
         }
 
         if let Ok(wm) = &self.wm {
-            info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm}\n"));
-
             if let Ok(theme) = &self.wm_theme {
-                info.push_str(&format!("{GREEN}{BOLD}WM Theme: {RESET}{theme}\n"));
+                info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm} (Theme: {RESET}{theme})\n"));
+            } else {
+                info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm}\n"));
             }
         }
 
