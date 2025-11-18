@@ -8,3 +8,6 @@ bloaty-csv:
 bloaty-json:
   bloaty-metafile meta.csv > meta.json
 bloaty: bloaty-build bloaty-csv bloaty-json
+
+update-svg:
+  bash ./assets/update-svg.sh
