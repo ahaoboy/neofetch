@@ -11,3 +11,9 @@ bloaty: bloaty-build bloaty-csv bloaty-json
 
 update-svg:
   bash ./assets/update-svg.sh
+
+clippy:
+  cargo clippy --fix --allow-dirty --allow-staged --all-targets
+fmt:
+  cargo fmt
+check: fmt clippy

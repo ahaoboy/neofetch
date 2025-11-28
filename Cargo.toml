@@ -18,6 +18,10 @@ tokio = { version = "1", features = ["full"] }
 dirs = "6"
 thiserror = "2"
 chrono = "0.4"
+public-ip-address = { version = "0.4", default-features = false, features = [
+  "rustls-tls",
+] }
+
 [target.'cfg(not(any(target_arch = "aarch64", target_os = "android", target_env = "musl")))'.dependencies]
 display-info = { version = "0.5", git = "https://github.com/nashaofu/display-info.git" }
 

@@ -52,6 +52,7 @@ use crate::de::get_de;
 use crate::disk::get_disk;
 use crate::host::get_host;
 use crate::host::{get_baseband, get_rom};
+use crate::ip::get_ip;
 use crate::kernel::get_kernel;
 use crate::locale::get_locale;
 use crate::memory::get_memory;
@@ -120,6 +121,7 @@ pub struct Neofetch {
     pub battery: Result<u32>,
     pub locale: Result<String>,
     pub ip: Option<String>,
+    pub local_ip: Option<String>,
     pub temperature: Result<Vec<temperature::TempSensor>>,
     pub network: Result<Vec<network::NetworkInfo>>,
 }
@@ -150,6 +152,7 @@ impl Neofetch {
             locale,
             temperature,
             network,
+            ip,
         ) = tokio::join!(
             which_shell(),
             get_os(),
@@ -173,11 +176,12 @@ impl Neofetch {
             get_locale(),
             get_temperature_sensors(),
             get_network_info(),
+            get_ip(),
         );
 
         // Get desktop environment based on OS
         let de = os.as_ref().ok().and_then(|o| get_de(o.clone()));
-        let ip = ip::get_ip();
+        let local_ip = ip::get_local_ip();
 
         Neofetch {
             os,
@@ -202,6 +206,7 @@ impl Neofetch {
             hostname,
             locale,
             ip,
+            local_ip,
             temperature,
             network,
         }
@@ -282,7 +287,9 @@ impl std::fmt::Display for Neofetch {
 
         if let Ok(wm) = &self.wm {
             if let Ok(theme) = &self.wm_theme {
-                info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm} (Theme: {RESET}{theme})\n"));
+                info.push_str(&format!(
+                    "{GREEN}{BOLD}WM: {RESET}{wm} (Theme: {RESET}{theme})\n"
+                ));
             } else {
                 info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm}\n"));
             }
@@ -339,10 +346,12 @@ impl std::fmt::Display for Neofetch {
             info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
         }
 
-        if let Some(ip) = &self.ip {
+        if let Some(ip) = &self.local_ip {
             info.push_str(&format!("{GREEN}{BOLD}Local IP: {RESET}{ip}\n"));
         }
-
+        if let Some(ip) = &self.ip {
+            info.push_str(&format!("{GREEN}{BOLD}IP: {RESET}{ip}\n"));
+        }
         // Handle network interfaces (Result type)
         if let Ok(interfaces) = &self.network {
             // Show only active interfaces with IP addresses
