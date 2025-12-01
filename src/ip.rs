@@ -11,7 +11,7 @@ pub fn get_local_ip() -> Option<String> {
 pub async fn get_ip() -> Option<String> {
     if let Ok(response) = perform_lookup(None).await {
         let ip = response.ip;
-        let s = match (response.country, response.city) {
+        let s = match (response.country_code, response.city) {
             (Some(country), Some(city)) => format!("{} ({}-{})", ip, country, city),
             (Some(country), None) => format!("{} ({})", ip, country),
             _ => format!("{}", ip),
