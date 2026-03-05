@@ -6,14 +6,14 @@ use human_bytes::human_bytes;
 pub struct Gpu {
     pub name: String,
     pub version: String,
-    pub ram: u32,
+    pub ram: u64,
 }
 impl Display for Gpu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut v = vec![];
         v.push(self.name.clone());
         if self.ram > 0 {
-            v.push(format!("({})", human_bytes(self.ram)));
+            v.push(format!("({})", human_bytes(self.ram as f64)));
         }
 
         if !self.version.is_empty() {
@@ -22,6 +22,38 @@ impl Display for Gpu {
 
         f.write_str(&v.join(" "))
     }
+}
+
+#[cfg(windows)]
+fn get_gpu_vram_from_registry() -> std::collections::HashMap<String, u64> {
+    use winreg::RegKey;
+    use winreg::enums::*;
+
+    let mut map = std::collections::HashMap::new();
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let class_key = match hklm.open_subkey(
+        r"SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}",
+    ) {
+        Ok(k) => k,
+        Err(_) => return map,
+    };
+
+    for subkey_name in class_key.enum_keys().filter_map(|k| k.ok()) {
+        if let Ok(subkey) = class_key.open_subkey(&subkey_name) {
+            let mem = match subkey.get_value::<u64, _>("HardwareInformation.qwMemorySize") {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+            // Index by both DriverDesc and AdapterString for robust matching
+            if let Ok(desc) = subkey.get_value::<String, _>("DriverDesc") {
+                map.insert(desc, mem);
+            }
+            if let Ok(adapter_str) = subkey.get_value::<String, _>("HardwareInformation.AdapterString") {
+                map.insert(adapter_str, mem);
+            }
+        }
+    }
+    map
 }
 
 #[cfg(windows)]
@@ -38,18 +70,25 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
         #[serde(rename = "DriverVersion")]
         pub driver_version: String,
         #[serde(rename = "AdapterRAM")]
-        pub adapter_ram: u32,
+        pub adapter_ram: u64,
     }
 
     let results: Vec<VideoController> = wmi_query().await.ok()?;
+    let vram_map = get_gpu_vram_from_registry();
 
     Some(
         results
             .iter()
-            .map(|i| Gpu {
-                name: i.caption.to_owned(),
-                version: i.driver_version.to_owned(),
-                ram: i.adapter_ram,
+            .map(|i| {
+                let ram = vram_map
+                    .get(&i.caption)
+                    .copied()
+                    .unwrap_or(i.adapter_ram);
+                Gpu {
+                    name: i.caption.to_owned(),
+                    version: i.driver_version.to_owned(),
+                    ram,
+                }
             })
             .collect(),
     )

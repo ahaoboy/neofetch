@@ -38,8 +38,8 @@ pub fn get_property(property: &str) -> Result<String> {
 
     let result = unsafe {
         __system_property_get(
-            prop_cstr.as_ptr() as *const u8,
-            buffer.as_mut_ptr() as *mut u8,
+            prop_cstr.as_ptr() as *const libc::c_char,
+            buffer.as_mut_ptr() as *mut libc::c_char,
         )
     };
 
@@ -51,7 +51,7 @@ pub fn get_property(property: &str) -> Result<String> {
     }
 
     let value = unsafe {
-        CStr::from_ptr(buffer.as_ptr() as *const u8)
+        CStr::from_ptr(buffer.as_ptr() as *const libc::c_char)
             .to_string_lossy()
             .into_owned()
     };
