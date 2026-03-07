@@ -31,9 +31,9 @@ fn get_gpu_vram_from_registry() -> std::collections::HashMap<String, u64> {
 
     let mut map = std::collections::HashMap::new();
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    let class_key = match hklm.open_subkey(
-        r"SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}",
-    ) {
+    let class_key = match hklm
+        .open_subkey(r"SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}")
+    {
         Ok(k) => k,
         Err(_) => return map,
     };
@@ -48,7 +48,9 @@ fn get_gpu_vram_from_registry() -> std::collections::HashMap<String, u64> {
             if let Ok(desc) = subkey.get_value::<String, _>("DriverDesc") {
                 map.insert(desc, mem);
             }
-            if let Ok(adapter_str) = subkey.get_value::<String, _>("HardwareInformation.AdapterString") {
+            if let Ok(adapter_str) =
+                subkey.get_value::<String, _>("HardwareInformation.AdapterString")
+            {
                 map.insert(adapter_str, mem);
             }
         }
@@ -80,10 +82,7 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
         results
             .iter()
             .map(|i| {
-                let ram = vram_map
-                    .get(&i.caption)
-                    .copied()
-                    .unwrap_or(i.adapter_ram);
+                let ram = vram_map.get(&i.caption).copied().unwrap_or(i.adapter_ram);
                 Gpu {
                     name: i.caption.to_owned(),
                     version: i.driver_version.to_owned(),

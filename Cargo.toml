@@ -8,19 +8,69 @@ description = "neofetch"
 homepage = "https://github.com/ahaoboy/neofetch"
 authors = ["ahaoboy"]
 
+[features]
+default = ["cli"]
+cli = [
+  "battery",
+  "cpu",
+  "de",
+  "disk",
+  "display",
+  "gpu",
+  "host",
+  "hostname",
+  "ip",
+  "kernel",
+  "locale",
+  "memory",
+  "network",
+  "os",
+  "packages",
+  "shell",
+  "system",
+  "temperature",
+  "terminal",
+  "uptime",
+  "user",
+  "wm",
+]
+
+battery = ["os"]
+cpu = []
+de = ["os"]
+disk = ["dep:human_bytes"]
+display = []
+gpu = ["dep:human_bytes"]
+host = []
+hostname = []
+ip = ["dep:public-ip-address"]
+kernel = []
+locale = []
+memory = ["dep:human_bytes"]
+network = []
+os = []
+packages = ["dep:dirs"]
+shell = ["dep:which-shell"]
+system = []
+temperature = []
+terminal = ["dep:which-terminal"]
+uptime = ["dep:chrono"]
+user = []
+wm = []
+
 [dependencies]
-human_bytes = "0.4"
+human_bytes = { version = "0.4", optional = true }
 regex = "1"
 ansi-width = "0.1"
-which-shell = { version = "0.1", git = "https://github.com/ahaoboy/which-shell" }
-which-terminal = { version = "0.1", git = "https://github.com/ahaoboy/which-terminal" }
+which-shell = { version = "0.1", git = "https://github.com/ahaoboy/which-shell", optional = true }
+which-terminal = { version = "0.1", git = "https://github.com/ahaoboy/which-terminal", optional = true }
 tokio = { version = "1", features = ["full"] }
-dirs = "6"
+dirs = { version = "6", optional = true }
 thiserror = "2"
-chrono = "0.4"
+chrono = { version = "0.4", optional = true }
 public-ip-address = { version = "0.4", default-features = false, features = [
   "rustls-tls",
-] }
+], optional = true }
 
 [target.'cfg(not(any(target_arch = "aarch64", target_os = "android", target_env = "musl")))'.dependencies]
 display-info = { version = "0.5", git = "https://github.com/nashaofu/display-info.git" }
@@ -28,7 +78,6 @@ display-info = { version = "0.5", git = "https://github.com/nashaofu/display-inf
 [target.'cfg(target_os = "windows")'.dependencies]
 wmi = "0.18"
 serde = { version = "1", features = ["derive"] }
-chrono = "0.4"
 winreg = "0.55"
 windows = { version = "0.62", features = [
   "Win32_System_Diagnostics_ToolHelp",
@@ -51,3 +100,9 @@ debug = true
 lto = false
 strip = false
 inherits = 'release'
+
+
+[[bin]]
+name = "neofetch"
+path = "src/main.rs"
+required-features = ["cli"]

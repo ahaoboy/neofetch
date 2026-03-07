@@ -1,69 +1,70 @@
-pub mod battery;
+// Core modules (always available)
 pub mod color;
-pub mod cpu;
-pub mod de;
-pub mod disk;
-pub mod display;
 pub mod error;
-pub mod gpu;
-pub mod host;
-pub mod hostname;
-pub mod icon;
-pub mod ip;
-pub mod kernel;
-pub mod locale;
 pub mod mappings;
-pub mod memory;
-pub mod network;
-pub mod os;
-pub mod packages;
 pub mod platform;
 pub mod share;
-pub mod shell;
-pub mod system;
-pub mod temperature;
-pub mod terminal;
-pub mod uptime;
-pub mod user;
 pub mod utils;
+
+// icon module depends on os::Distro
+#[cfg(feature = "os")]
+pub mod icon;
+
+// Feature-gated modules
+#[cfg(feature = "battery")]
+pub mod battery;
+#[cfg(feature = "cpu")]
+pub mod cpu;
+#[cfg(feature = "de")]
+pub mod de;
+#[cfg(feature = "disk")]
+pub mod disk;
+#[cfg(feature = "display")]
+pub mod display;
+#[cfg(feature = "gpu")]
+pub mod gpu;
+#[cfg(feature = "host")]
+pub mod host;
+#[cfg(feature = "hostname")]
+pub mod hostname;
+#[cfg(feature = "ip")]
+pub mod ip;
+#[cfg(feature = "kernel")]
+pub mod kernel;
+#[cfg(feature = "locale")]
+pub mod locale;
+#[cfg(feature = "memory")]
+pub mod memory;
+#[cfg(feature = "network")]
+pub mod network;
+#[cfg(feature = "os")]
+pub mod os;
+#[cfg(feature = "packages")]
+pub mod packages;
+#[cfg(feature = "shell")]
+pub mod shell;
+#[cfg(feature = "system")]
+pub mod system;
+#[cfg(feature = "temperature")]
+pub mod temperature;
+#[cfg(feature = "terminal")]
+pub mod terminal;
+#[cfg(feature = "uptime")]
+pub mod uptime;
+#[cfg(feature = "user")]
+pub mod user;
+#[cfg(feature = "wm")]
 pub mod wm;
 
 // Re-export commonly used types
-use cpu::Cpu;
-use disk::Disk;
-use display::{Display, get_display};
 pub use error::{NeofetchError, Result};
-use gpu::Gpu;
-use hostname::get_hostname;
-use os::OS;
-use packages::Packages;
-use uptime::Time;
-use which_shell::ShellVersion;
-use which_terminal::TerminalInfo;
 
-use crate::battery::get_battery;
+#[allow(unused_imports)]
 use crate::color::{
     BLACK_BG, BLUE_BG, BOLD, BRIGHT_BLACK_BG, BRIGHT_BLUE_BG, BRIGHT_CYAN_BG, BRIGHT_GREEN_BG,
     BRIGHT_MAGENTA_BG, BRIGHT_RED_BG, BRIGHT_WHITE_BG, BRIGHT_YELLOW_BG, CYAN_BG, GREEN, GREEN_BG,
     MAGENTA_BG, RED, RED_BG, RESET, WHITE_BG, YELLOW_BG, cursor_down, cursor_forward, cursor_up,
 };
-use crate::cpu::get_cpu;
-use crate::de::get_de;
-use crate::disk::get_disk;
-use crate::host::get_host;
-use crate::host::{get_baseband, get_rom};
-use crate::ip::get_ip;
-use crate::kernel::get_kernel;
-use crate::locale::get_locale;
-use crate::memory::get_memory;
-use crate::packages::get_packages;
-use crate::shell::which_shell;
-use crate::terminal::get_terminal;
-use crate::uptime::get_uptime;
-use crate::user::get_user;
-use crate::wm::{get_wm, get_wm_theme};
-use crate::{gpu::get_gpu, os::get_os};
-use crate::{network::get_network_info, temperature::get_temperature_sensors};
 
 pub fn join(left: String, right: String) -> String {
     let mut s = String::new();
@@ -96,323 +97,365 @@ pub fn join(left: String, right: String) -> String {
     s
 }
 
-/// System information container
-#[derive(Debug, Clone)]
-pub struct Neofetch {
-    pub os: Result<OS>,
-    pub user: Result<String>,
-    pub host: Result<String>,
-    pub hostname: Result<String>,
-    pub rom: Result<String>,
-    pub baseband: Result<String>,
-    pub kernel: Result<String>,
-    pub uptime: Result<Time>,
-    pub packages: Result<Packages>,
-    pub shell: Result<ShellVersion>,
-    pub display: Result<Vec<Display>>,
-    pub de: Option<String>,
-    pub wm: Result<String>,
-    pub wm_theme: Result<String>,
-    pub terminal: Result<TerminalInfo>,
-    pub disk: Result<Vec<Disk>>,
-    pub cpu: Result<Cpu>,
-    pub gpu: Option<Vec<Gpu>>,
-    pub memory: Result<String>,
-    pub battery: Result<u32>,
-    pub locale: Result<String>,
-    pub ip: Option<String>,
-    pub local_ip: Option<String>,
-    pub temperature: Result<Vec<temperature::TempSensor>>,
-    pub network: Result<Vec<network::NetworkInfo>>,
-}
+// The Neofetch struct and its Display implementation require all modules,
+// so they are only available when the "cli" feature is enabled.
+// Third-party users should use individual modules directly
+// (e.g., `neofetch::cpu::get_cpu().await`).
+#[cfg(feature = "cli")]
+mod cli {
+    use super::*;
+    use cpu::Cpu;
+    use disk::Disk;
+    use display::{Display, get_display};
+    use gpu::Gpu;
+    use hostname::get_hostname;
+    use os::OS;
+    use packages::Packages;
+    use uptime::Time;
+    use which_shell::ShellVersion;
+    use which_terminal::TerminalInfo;
 
-impl Neofetch {
-    /// Collect all system information
-    pub async fn new() -> Neofetch {
-        let (
-            shell,
-            os,
-            user,
-            host,
-            rom,
-            baseband,
-            kernel,
-            uptime,
-            packages,
-            display,
-            wm,
-            wm_theme,
-            terminal,
-            disk,
-            cpu,
-            gpu,
-            memory,
-            battery,
-            hostname,
-            locale,
-            temperature,
-            network,
-            ip,
-        ) = tokio::join!(
-            which_shell(),
-            get_os(),
-            get_user(),
-            get_host(),
-            get_rom(),
-            get_baseband(),
-            get_kernel(),
-            get_uptime(),
-            get_packages(),
-            get_display(),
-            get_wm(),
-            get_wm_theme(),
-            get_terminal(),
-            get_disk(),
-            get_cpu(),
-            get_gpu(),
-            get_memory(),
-            get_battery(),
-            get_hostname(),
-            get_locale(),
-            get_temperature_sensors(),
-            get_network_info(),
-            get_ip(),
-        );
+    use crate::battery::get_battery;
+    use crate::cpu::get_cpu;
+    use crate::de::get_de;
+    use crate::disk::get_disk;
+    use crate::host::get_host;
+    use crate::host::{get_baseband, get_rom};
+    use crate::ip::get_ip;
+    use crate::kernel::get_kernel;
+    use crate::locale::get_locale;
+    use crate::memory::get_memory;
+    use crate::packages::get_packages;
+    use crate::shell::which_shell;
+    use crate::terminal::get_terminal;
+    use crate::uptime::get_uptime;
+    use crate::user::get_user;
+    use crate::wm::{get_wm, get_wm_theme};
+    use crate::{gpu::get_gpu, os::get_os};
+    use crate::{network::get_network_info, temperature::get_temperature_sensors};
 
-        // Get desktop environment based on OS
-        let de = os.as_ref().ok().and_then(|o| get_de(o.clone()));
-        let local_ip = ip::get_local_ip();
+    /// System information container
+    #[derive(Debug, Clone)]
+    pub struct Neofetch {
+        pub os: Result<OS>,
+        pub user: Result<String>,
+        pub host: Result<String>,
+        pub hostname: Result<String>,
+        pub rom: Result<String>,
+        pub baseband: Result<String>,
+        pub kernel: Result<String>,
+        pub uptime: Result<Time>,
+        pub packages: Result<Packages>,
+        pub shell: Result<ShellVersion>,
+        pub display: Result<Vec<Display>>,
+        pub de: Option<String>,
+        pub wm: Result<String>,
+        pub wm_theme: Result<String>,
+        pub terminal: Result<TerminalInfo>,
+        pub disk: Result<Vec<Disk>>,
+        pub cpu: Result<Cpu>,
+        pub gpu: Option<Vec<Gpu>>,
+        pub memory: Result<String>,
+        pub battery: Result<u32>,
+        pub locale: Result<String>,
+        pub ip: Option<String>,
+        pub local_ip: Option<String>,
+        pub temperature: Result<Vec<temperature::TempSensor>>,
+        pub network: Result<Vec<network::NetworkInfo>>,
+    }
 
-        Neofetch {
-            os,
-            user,
-            host,
-            rom,
-            baseband,
-            kernel,
-            uptime,
-            packages,
-            shell,
-            display,
-            de,
-            wm,
-            wm_theme,
-            terminal,
-            disk,
-            cpu,
-            gpu,
-            memory,
-            battery,
-            hostname,
-            locale,
-            ip,
-            local_ip,
-            temperature,
-            network,
+    impl Neofetch {
+        /// Collect all system information
+        pub async fn new() -> Neofetch {
+            let (
+                shell,
+                os,
+                user,
+                host,
+                rom,
+                baseband,
+                kernel,
+                uptime,
+                packages,
+                display,
+                wm,
+                wm_theme,
+                terminal,
+                disk,
+                cpu,
+                gpu,
+                memory,
+                battery,
+                hostname,
+                locale,
+                temperature,
+                network,
+                ip,
+            ) = tokio::join!(
+                which_shell(),
+                get_os(),
+                get_user(),
+                get_host(),
+                get_rom(),
+                get_baseband(),
+                get_kernel(),
+                get_uptime(),
+                get_packages(),
+                get_display(),
+                get_wm(),
+                get_wm_theme(),
+                get_terminal(),
+                get_disk(),
+                get_cpu(),
+                get_gpu(),
+                get_memory(),
+                get_battery(),
+                get_hostname(),
+                get_locale(),
+                get_temperature_sensors(),
+                get_network_info(),
+                get_ip(),
+            );
+
+            // Get desktop environment based on OS
+            let de = os.as_ref().ok().and_then(|o| get_de(o.clone()));
+            let local_ip = ip::get_local_ip();
+
+            Neofetch {
+                os,
+                user,
+                host,
+                rom,
+                baseband,
+                kernel,
+                uptime,
+                packages,
+                shell,
+                display,
+                de,
+                wm,
+                wm_theme,
+                terminal,
+                disk,
+                cpu,
+                gpu,
+                memory,
+                battery,
+                hostname,
+                locale,
+                ip,
+                local_ip,
+                temperature,
+                network,
+            }
         }
     }
-}
 
-impl std::fmt::Display for Neofetch {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut info = String::new();
-        let mut icon = String::new();
-        let user = self.user.as_ref().ok().cloned().unwrap_or_default();
-        let hostname = self.hostname.as_ref().ok().cloned().unwrap_or_default();
+    impl std::fmt::Display for Neofetch {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let mut info = String::new();
+            let mut icon = String::new();
+            let user = self.user.as_ref().ok().cloned().unwrap_or_default();
+            let hostname = self.hostname.as_ref().ok().cloned().unwrap_or_default();
 
-        info.push_str(&format!(
-            "{RESET}{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
-        ));
-        info.push_str("-------\n");
+            info.push_str(&format!(
+                "{RESET}{RED}{BOLD}{user}{RESET}@{RED}{BOLD}{hostname}{RESET}\n"
+            ));
+            info.push_str("-------\n");
 
-        // Handle OS (Result type)
-        if let Ok(os) = &self.os {
-            icon = os.distro.icon();
-            info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{}\n", os));
-        }
-
-        if let Ok(host) = &self.host {
-            info.push_str(&format!("{GREEN}{BOLD}Host: {RESET}{host}\n"));
-        }
-
-        if let Ok(rom) = &self.rom {
-            info.push_str(&format!("{GREEN}{BOLD}Rom: {RESET}{rom}\n"));
-        }
-
-        if let Ok(baseband) = &self.baseband {
-            info.push_str(&format!("{GREEN}{BOLD}Baseband: {RESET}{baseband}\n"));
-        }
-
-        // Handle kernel (Result type)
-        if let Ok(kernel) = &self.kernel {
-            info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
-        }
-
-        if let Ok(uptime) = &self.uptime
-            && uptime.0 > 0
-        {
-            info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
-        }
-
-        if let Ok(packages) = &self.packages {
-            let s = packages.to_string();
-            if !s.trim().is_empty() {
-                info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{s}\n"));
+            // Handle OS (Result type)
+            if let Ok(os) = &self.os {
+                icon = os.distro.icon();
+                info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{}\n", os));
             }
-        }
 
-        if let Ok(shell) = &self.shell {
-            info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{shell}\n"));
-        }
-
-        if let Ok(displays) = &self.display {
-            for display in displays {
-                let key = if let Some(i) = &display.friendly_name {
-                    format!("{GREEN}{BOLD}Display({i})")
-                } else {
-                    display
-                        .name
-                        .clone()
-                        .map_or(format!("{GREEN}{BOLD}Display"), |s| {
-                            format!("{GREEN}{BOLD}Display({s})")
-                        })
-                };
-                info.push_str(&format!("{key}: {RESET}{}\n", display));
+            if let Ok(host) = &self.host {
+                info.push_str(&format!("{GREEN}{BOLD}Host: {RESET}{host}\n"));
             }
-        }
 
-        if let Some(de) = &self.de {
-            info.push_str(&format!("{GREEN}{BOLD}DE: {RESET}{de}\n"));
-        }
-
-        if let Ok(wm) = &self.wm {
-            if let Ok(theme) = &self.wm_theme {
-                info.push_str(&format!(
-                    "{GREEN}{BOLD}WM: {RESET}{wm} (Theme: {RESET}{theme})\n"
-                ));
-            } else {
-                info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm}\n"));
+            if let Ok(rom) = &self.rom {
+                info.push_str(&format!("{GREEN}{BOLD}Rom: {RESET}{rom}\n"));
             }
-        }
 
-        if let Ok(terminal) = &self.terminal {
-            info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
-        }
+            if let Ok(baseband) = &self.baseband {
+                info.push_str(&format!("{GREEN}{BOLD}Baseband: {RESET}{baseband}\n"));
+            }
 
-        if let Ok(disks) = &self.disk {
-            for disk in disks {
-                if disk.total > 0 {
-                    info.push_str(&format!(
-                        "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
-                        disk.name, disk
-                    ));
+            // Handle kernel (Result type)
+            if let Ok(kernel) = &self.kernel {
+                info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
+            }
+
+            if let Ok(uptime) = &self.uptime
+                && uptime.0 > 0
+            {
+                info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+            }
+
+            if let Ok(packages) = &self.packages {
+                let s = packages.to_string();
+                if !s.trim().is_empty() {
+                    info.push_str(&format!("{GREEN}{BOLD}Packages: {RESET}{s}\n"));
                 }
             }
-        }
 
-        // Handle CPU (Result type)
-        if let Ok(cpu) = &self.cpu {
-            info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
-        }
-
-        if let Some(gpu) = &self.gpu {
-            for g in gpu {
-                info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{g}\n"));
+            if let Ok(shell) = &self.shell {
+                info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{shell}\n"));
             }
-        }
 
-        // Handle memory (Result type)
-        if let Ok(memory) = &self.memory {
-            info.push_str(&format!("{GREEN}{BOLD}Memory: {RESET}{memory}\n"));
-        }
-        // Handle temperature sensors (Result type)
-        if let Ok(sensors) = &self.temperature
-            && !sensors.is_empty()
-        {
-            let k = "Temperature: ";
-            // Show only the first few sensors to avoid clutter
-            for (i, sensor) in sensors.iter().take(3).enumerate() {
-                if i == 0 {
-                    info.push_str(&format!("{GREEN}{BOLD}{k}{RESET}{sensor}\n"));
-                } else {
-                    info.push_str(&format!(
-                        "{GREEN}{BOLD}{}{RESET}{sensor}\n",
-                        " ".repeat(k.len()),
-                    ));
-                }
-            }
-        }
-        if let Ok(battery) = &self.battery {
-            info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
-        }
-
-        if let Some(ip) = &self.local_ip {
-            info.push_str(&format!("{GREEN}{BOLD}Local IP: {RESET}{ip}\n"));
-        }
-        if let Some(ip) = &self.ip {
-            info.push_str(&format!("{GREEN}{BOLD}IP: {RESET}{ip}\n"));
-        }
-        // Handle network interfaces (Result type)
-        if let Ok(interfaces) = &self.network {
-            // Show only active interfaces with IP addresses
-            let active_interfaces: Vec<_> = interfaces
-                .iter()
-                .filter(|iface| iface.is_up && iface.ipv4_address.is_some())
-                .collect();
-
-            if !active_interfaces.is_empty() {
-                let k = "Network: ";
-                for (i, iface) in active_interfaces.iter().take(3).enumerate() {
-                    let ip = iface.ipv4_address.as_ref().unwrap();
-                    if i == 0 {
-                        info.push_str(&format!(
-                            "{GREEN}{BOLD}{k}{RESET}{} ({ip})\n",
-                            iface.interface_name,
-                        ));
+            if let Ok(displays) = &self.display {
+                for display in displays {
+                    let key = if let Some(i) = &display.friendly_name {
+                        format!("{GREEN}{BOLD}Display({i})")
                     } else {
+                        display
+                            .name
+                            .clone()
+                            .map_or(format!("{GREEN}{BOLD}Display"), |s| {
+                                format!("{GREEN}{BOLD}Display({s})")
+                            })
+                    };
+                    info.push_str(&format!("{key}: {RESET}{}\n", display));
+                }
+            }
+
+            if let Some(de) = &self.de {
+                info.push_str(&format!("{GREEN}{BOLD}DE: {RESET}{de}\n"));
+            }
+
+            if let Ok(wm) = &self.wm {
+                if let Ok(theme) = &self.wm_theme {
+                    info.push_str(&format!(
+                        "{GREEN}{BOLD}WM: {RESET}{wm} (Theme: {RESET}{theme})\n"
+                    ));
+                } else {
+                    info.push_str(&format!("{GREEN}{BOLD}WM: {RESET}{wm}\n"));
+                }
+            }
+
+            if let Ok(terminal) = &self.terminal {
+                info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
+            }
+
+            if let Ok(disks) = &self.disk {
+                for disk in disks {
+                    if disk.total > 0 {
                         info.push_str(&format!(
-                            "{GREEN}{BOLD}{}{RESET}{} ({ip})\n",
-                            " ".repeat(k.len()),
-                            iface.interface_name,
+                            "{GREEN}{BOLD}Disk({}): {RESET}{}\n",
+                            disk.name, disk
                         ));
                     }
                 }
             }
+
+            // Handle CPU (Result type)
+            if let Ok(cpu) = &self.cpu {
+                info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
+            }
+
+            if let Some(gpu) = &self.gpu {
+                for g in gpu {
+                    info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{g}\n"));
+                }
+            }
+
+            // Handle memory (Result type)
+            if let Ok(memory) = &self.memory {
+                info.push_str(&format!("{GREEN}{BOLD}Memory: {RESET}{memory}\n"));
+            }
+            // Handle temperature sensors (Result type)
+            if let Ok(sensors) = &self.temperature
+                && !sensors.is_empty()
+            {
+                let k = "Temperature: ";
+                // Show only the first few sensors to avoid clutter
+                for (i, sensor) in sensors.iter().take(3).enumerate() {
+                    if i == 0 {
+                        info.push_str(&format!("{GREEN}{BOLD}{k}{RESET}{sensor}\n"));
+                    } else {
+                        info.push_str(&format!(
+                            "{GREEN}{BOLD}{}{RESET}{sensor}\n",
+                            " ".repeat(k.len()),
+                        ));
+                    }
+                }
+            }
+            if let Ok(battery) = &self.battery {
+                info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
+            }
+
+            if let Some(ip) = &self.local_ip {
+                info.push_str(&format!("{GREEN}{BOLD}Local IP: {RESET}{ip}\n"));
+            }
+            if let Some(ip) = &self.ip {
+                info.push_str(&format!("{GREEN}{BOLD}IP: {RESET}{ip}\n"));
+            }
+            // Handle network interfaces (Result type)
+            if let Ok(interfaces) = &self.network {
+                // Show only active interfaces with IP addresses
+                let active_interfaces: Vec<_> = interfaces
+                    .iter()
+                    .filter(|iface| iface.is_up && iface.ipv4_address.is_some())
+                    .collect();
+
+                if !active_interfaces.is_empty() {
+                    let k = "Network: ";
+                    for (i, iface) in active_interfaces.iter().take(3).enumerate() {
+                        let ip = iface.ipv4_address.as_ref().unwrap();
+                        if i == 0 {
+                            info.push_str(&format!(
+                                "{GREEN}{BOLD}{k}{RESET}{} ({ip})\n",
+                                iface.interface_name,
+                            ));
+                        } else {
+                            info.push_str(&format!(
+                                "{GREEN}{BOLD}{}{RESET}{} ({ip})\n",
+                                " ".repeat(k.len()),
+                                iface.interface_name,
+                            ));
+                        }
+                    }
+                }
+            }
+
+            if let Ok(locale) = &self.locale {
+                info.push_str(&format!("{GREEN}{BOLD}Locale: {RESET}{locale}\n"));
+            }
+
+            // Color bars
+            let color_str: String = [
+                BLACK_BG, RED_BG, GREEN_BG, YELLOW_BG, BLUE_BG, MAGENTA_BG, CYAN_BG, WHITE_BG,
+            ]
+            .map(|c| format!("{c}   "))
+            .into_iter()
+            .collect();
+            info.push('\n');
+            info.push_str(&(color_str + RESET + "\n"));
+
+            let color_str: String = [
+                BRIGHT_BLACK_BG,
+                BRIGHT_RED_BG,
+                BRIGHT_GREEN_BG,
+                BRIGHT_YELLOW_BG,
+                BRIGHT_BLUE_BG,
+                BRIGHT_MAGENTA_BG,
+                BRIGHT_CYAN_BG,
+                BRIGHT_WHITE_BG,
+            ]
+            .map(|c| format!("{c}   "))
+            .into_iter()
+            .collect();
+            info.push_str(&(color_str + RESET + "\n"));
+
+            write!(f, "{}", join(icon, info))
         }
-
-        if let Ok(locale) = &self.locale {
-            info.push_str(&format!("{GREEN}{BOLD}Locale: {RESET}{locale}\n"));
-        }
-
-        // Color bars
-        let color_str: String = [
-            BLACK_BG, RED_BG, GREEN_BG, YELLOW_BG, BLUE_BG, MAGENTA_BG, CYAN_BG, WHITE_BG,
-        ]
-        .map(|c| format!("{c}   "))
-        .into_iter()
-        .collect();
-        info.push('\n');
-        info.push_str(&(color_str + RESET + "\n"));
-
-        let color_str: String = [
-            BRIGHT_BLACK_BG,
-            BRIGHT_RED_BG,
-            BRIGHT_GREEN_BG,
-            BRIGHT_YELLOW_BG,
-            BRIGHT_BLUE_BG,
-            BRIGHT_MAGENTA_BG,
-            BRIGHT_CYAN_BG,
-            BRIGHT_WHITE_BG,
-        ]
-        .map(|c| format!("{c}   "))
-        .into_iter()
-        .collect();
-        info.push_str(&(color_str + RESET + "\n"));
-
-        write!(f, "{}", join(icon, info))
     }
 }
 
+#[cfg(feature = "cli")]
+pub use cli::Neofetch;
+
+#[cfg(feature = "cli")]
 pub async fn neofetch() -> String {
     Neofetch::new().await.to_string()
 }
