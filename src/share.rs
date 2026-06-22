@@ -1,114 +1,90 @@
-use std::{
-    ffi::OsStr,
-    fmt::Debug,
-    process::{Command, Stdio},
-};
+use std::{ffi::OsStr, fmt::Debug};
 
-pub fn exec<I, S>(cmd: S, args: I) -> Option<String>
+use crate::error::{NeofetchError, Result};
+
+pub fn exec<I, S>(cmd: S, args: I) -> Result<String>
 where
     I: IntoIterator<Item = S> + Debug,
     S: AsRef<OsStr> + Debug,
 {
-    let output = Command::new(cmd)
-        .args(args)
-        .stdin(Stdio::null())
-        .output()
-        .ok()?;
-    Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
+    crate::utils::process::execute_command_sync(cmd, &args.into_iter().collect::<Vec<_>>())
 }
 
-pub async fn exec_async<S, I>(cmd: S, args: I) -> Option<String>
+pub async fn exec_async<S, I>(cmd: S, args: I) -> Result<String>
 where
     I: IntoIterator<Item = S> + Debug,
     S: AsRef<OsStr> + Debug,
 {
-    let output = tokio::process::Command::new(cmd)
-        .args(args)
-        .stdin(Stdio::null())
-        .output()
-        .await
-        .ok()?;
-    Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
+    crate::utils::process::execute_command(cmd, &args.into_iter().collect::<Vec<_>>()).await
 }
 
-pub fn get_file_name(path: &str) -> Option<String> {
+pub fn get_file_name(path: &str) -> Result<String> {
     let path = path.replace('\\', "/");
-    let name = path.split('/').next_back()?.split('.').next()?.trim();
-    Some(name.into())
+    let name = path
+        .split('/')
+        .next_back()
+        .and_then(|n| n.split('.').next())
+        .map(|n| n.trim().to_string())
+        .ok_or_else(|| {
+            NeofetchError::parse_error(
+                "path",
+                format!("Failed to extract filename from '{}'", path),
+            )
+        })?;
+    Ok(name)
 }
-pub fn get_pid_name(id: u32) -> Option<String> {
-    std::fs::read_to_string(format!("/proc/{id}/comm").as_str())
-        .ok()
+
+pub fn get_pid_name(id: u32) -> Result<String> {
+    let path = format!("/proc/{id}/comm");
+    std::fs::read_to_string(&path)
         .map(|i| i.trim().to_string())
+        .map_err(|e| NeofetchError::file_read(path, e))
 }
 
-pub fn get_ppid(id: u32) -> Option<u32> {
-    if let Some(ppid) = exec(
-        "grep",
-        ["-i", "-F", "PPid:", format!("/proc/{id}/status").as_str()],
-    ) {
-        let ppid = ppid.split(':').next_back()?.trim();
-        let ppid: u32 = ppid.parse().ok()?;
-        return Some(ppid);
-    }
-    None
+pub fn get_ppid(id: u32) -> Result<u32> {
+    use crate::utils::process::execute_command_sync;
+
+    let status_path = format!("/proc/{id}/status");
+    let ppid_line = execute_command_sync("grep", &["-i", "-F", "PPid:", status_path.as_str()])?;
+    let ppid = ppid_line
+        .split(':')
+        .next_back()
+        .ok_or_else(|| NeofetchError::parse_error("PPid", "missing colon separator"))?
+        .trim();
+    ppid.parse()
+        .map_err(|e: std::num::ParseIntError| NeofetchError::parse_error("PPid", e.to_string()))
 }
 
+// Re-export Android property functions from platform module
 #[cfg(target_os = "android")]
-unsafe extern "C" {
-    fn __system_property_get(name: *const libc::c_char, value: *mut libc::c_char) -> i32;
+pub use crate::platform::get_property;
+
+pub fn detect_cpu(name: &str) -> Result<String> {
+    crate::mappings::CPU_MAPPINGS
+        .iter()
+        .find_map(|i| {
+            if i.0 == name {
+                Some(i.1.to_string())
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| {
+            NeofetchError::data_unavailable(format!("CPU mapping not found for '{}'", name))
+        })
 }
 
-#[cfg(target_os = "android")]
-pub fn get_property(property: &str) -> Option<String> {
-    use std::ffi::{CStr, CString};
-    use std::io;
-
-    let prop_cstr = CString::new(property)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))
-        .ok()?;
-    let mut buffer = [0i8; 92];
-
-    let result = unsafe {
-        __system_property_get(
-            prop_cstr.as_ptr() as *mut libc::c_char,
-            buffer.as_mut_ptr() as *mut libc::c_char,
-        )
-    };
-
-    if result < 0 {
-        return None;
-    }
-
-    let value = unsafe {
-        CStr::from_ptr(buffer.as_ptr() as *const libc::c_char)
-            .to_string_lossy()
-            .into_owned()
-    };
-
-    if value.is_empty() {
-        return None;
-    }
-
-    Some(value)
-}
-
-pub fn detect_cpu(name: &str) -> Option<String> {
-    crate::mappings::CPU_MAPPINGS.iter().find_map(|i| {
-        if i.0 == name {
-            Some(i.1.to_string())
-        } else {
-            None
-        }
-    })
-}
-
-pub fn detect_locale(name: &str) -> Option<String> {
-    crate::mappings::LOCALE_MAPPINGS.iter().find_map(|i| {
-        if i.0 == name {
-            Some(i.2.to_string())
-        } else {
-            None
-        }
-    })
+pub fn detect_locale(name: &str) -> Result<String> {
+    crate::mappings::LOCALE_MAPPINGS
+        .iter()
+        .find_map(|i| {
+            if i.0 == name {
+                Some(i.2.to_string())
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| {
+            NeofetchError::data_unavailable(format!("Locale mapping not found for '{}'", name))
+        })
 }

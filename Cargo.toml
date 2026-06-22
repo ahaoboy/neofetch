@@ -78,7 +78,7 @@ display-info = { version = "0.5", git = "https://github.com/nashaofu/display-inf
 [target.'cfg(target_os = "windows")'.dependencies]
 wmi = "0.18"
 serde = { version = "1", features = ["derive"] }
-winreg = "0.55"
+winreg = "0.56"
 windows = { version = "0.62", features = [
   "Win32_System_Diagnostics_ToolHelp",
   "Win32_System_Threading",

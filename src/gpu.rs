@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use human_bytes::human_bytes;
 
+use crate::error::{NeofetchError, Result};
+
 #[derive(Debug, Clone)]
 pub struct Gpu {
     pub name: String,
@@ -25,18 +27,17 @@ impl Display for Gpu {
 }
 
 #[cfg(windows)]
-fn get_gpu_vram_from_registry() -> std::collections::HashMap<String, u64> {
+fn get_gpu_vram_from_registry() -> Result<std::collections::HashMap<String, u64>> {
     use winreg::RegKey;
     use winreg::enums::*;
 
     let mut map = std::collections::HashMap::new();
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    let class_key = match hklm
+    let class_key = hklm
         .open_subkey(r"SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}")
-    {
-        Ok(k) => k,
-        Err(_) => return map,
-    };
+        .map_err(|e| {
+            NeofetchError::system_call(format!("Failed to open GPU registry class key: {}", e))
+        })?;
 
     for subkey_name in class_key.enum_keys().filter_map(|k| k.ok()) {
         if let Ok(subkey) = class_key.open_subkey(&subkey_name) {
@@ -44,7 +45,6 @@ fn get_gpu_vram_from_registry() -> std::collections::HashMap<String, u64> {
                 Ok(v) => v,
                 Err(_) => continue,
             };
-            // Index by both DriverDesc and AdapterString for robust matching
             if let Ok(desc) = subkey.get_value::<String, _>("DriverDesc") {
                 map.insert(desc, mem);
             }
@@ -55,11 +55,11 @@ fn get_gpu_vram_from_registry() -> std::collections::HashMap<String, u64> {
             }
         }
     }
-    map
+    Ok(map)
 }
 
 #[cfg(windows)]
-pub async fn get_gpu() -> Option<Vec<Gpu>> {
+pub async fn get_gpu() -> Result<Vec<Gpu>> {
     use serde::Deserialize;
 
     use crate::platform::wmi_query;
@@ -70,27 +70,29 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
         #[serde(rename = "Caption")]
         pub caption: String,
         #[serde(rename = "DriverVersion")]
-        pub driver_version: String,
+        pub driver_version: Option<String>,
         #[serde(rename = "AdapterRAM")]
-        pub adapter_ram: u64,
+        pub adapter_ram: Option<u64>,
     }
 
-    let results: Vec<VideoController> = wmi_query().await.ok()?;
-    let vram_map = get_gpu_vram_from_registry();
+    let results: Vec<VideoController> = wmi_query().await?;
+    let vram_map = get_gpu_vram_from_registry().unwrap_or_default();
 
-    Some(
-        results
-            .iter()
-            .map(|i| {
-                let ram = vram_map.get(&i.caption).copied().unwrap_or(i.adapter_ram);
-                Gpu {
-                    name: i.caption.to_owned(),
-                    version: i.driver_version.to_owned(),
-                    ram,
-                }
-            })
-            .collect(),
-    )
+    Ok(results
+        .iter()
+        .map(|i| {
+            let ram = vram_map
+                .get(&i.caption)
+                .copied()
+                .or(i.adapter_ram)
+                .unwrap_or(0);
+            Gpu {
+                name: i.caption.to_owned(),
+                version: i.driver_version.clone().unwrap_or_default(),
+                ram,
+            }
+        })
+        .collect())
 }
 
 #[cfg(unix)]
@@ -129,13 +131,19 @@ fn load_pci_ids() -> (
 }
 
 #[cfg(unix)]
-pub async fn get_gpu() -> Option<Vec<Gpu>> {
+pub async fn get_gpu() -> Result<Vec<Gpu>> {
     let path = std::path::Path::new("/sys/bus/pci/devices");
     let (vendor_names, device_names) = load_pci_ids();
 
     let mut v = vec![];
-    let mut dir = tokio::fs::read_dir(path).await.ok()?;
-    while let Some(entry) = dir.next_entry().await.ok()? {
+    let mut dir = tokio::fs::read_dir(path)
+        .await
+        .map_err(|e| NeofetchError::file_read(path.display().to_string(), e))?;
+    while let Some(entry) = dir
+        .next_entry()
+        .await
+        .map_err(|e| NeofetchError::file_read(path.display().to_string(), e))?
+    {
         let device_path = entry.path();
 
         let vendor = tokio::fs::read_to_string(device_path.join("vendor"))
@@ -162,5 +170,5 @@ pub async fn get_gpu() -> Option<Vec<Gpu>> {
             });
         }
     }
-    Some(v)
+    Ok(v)
 }

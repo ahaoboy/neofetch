@@ -15,17 +15,13 @@ pub async fn get_locale() -> crate::error::Result<String> {
         crate::error::NeofetchError::data_unavailable("Locale information not found")
     })?;
 
-    let locale = detect_locale(&hex.locale).ok_or_else(|| {
-        crate::error::NeofetchError::parse_error("locale", "Failed to detect locale")
-    })?;
+    let locale = detect_locale(&hex.locale)?;
     Ok(locale)
 }
 
 #[cfg(target_os = "android")]
 pub async fn get_locale() -> crate::error::Result<String> {
-    crate::share::get_property("persist.sys.locale").ok_or_else(|| {
-        crate::error::NeofetchError::data_unavailable("Locale property not available")
-    })
+    crate::share::get_property("persist.sys.locale")
 }
 
 #[cfg(any(target_os = "macos", target_os = "linux",))]

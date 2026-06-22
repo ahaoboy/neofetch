@@ -148,18 +148,18 @@ mod cli {
         pub packages: Result<Packages>,
         pub shell: Result<ShellVersion>,
         pub display: Result<Vec<Display>>,
-        pub de: Option<String>,
+        pub de: Result<String>,
         pub wm: Result<String>,
         pub wm_theme: Result<String>,
         pub terminal: Result<TerminalInfo>,
         pub disk: Result<Vec<Disk>>,
         pub cpu: Result<Cpu>,
-        pub gpu: Option<Vec<Gpu>>,
+        pub gpu: Result<Vec<Gpu>>,
         pub memory: Result<String>,
         pub battery: Result<u32>,
         pub locale: Result<String>,
-        pub ip: Option<String>,
-        pub local_ip: Option<String>,
+        pub ip: Result<String>,
+        pub local_ip: Result<String>,
         pub temperature: Result<Vec<temperature::TempSensor>>,
         pub network: Result<Vec<network::NetworkInfo>>,
     }
@@ -218,7 +218,13 @@ mod cli {
             );
 
             // Get desktop environment based on OS
-            let de = os.as_ref().ok().and_then(|o| get_de(o.clone()));
+            let de = match &os {
+                Ok(o) => get_de(o.clone()),
+                Err(e) => Err(NeofetchError::data_unavailable(format!(
+                    "Cannot detect DE without OS: {}",
+                    e
+                ))),
+            };
             let local_ip = ip::get_local_ip();
 
             Neofetch {
@@ -263,33 +269,32 @@ mod cli {
             ));
             info.push_str("-------\n");
 
-            // Handle OS (Result type)
+            // Helper: append a labeled field if Ok
+            fn append<T: std::fmt::Display>(
+                info: &mut String,
+                label: &str,
+                result: &crate::error::Result<T>,
+            ) {
+                if let Ok(value) = result {
+                    info.push_str(&format!("{GREEN}{BOLD}{label}: {RESET}{value}\n"));
+                }
+            }
+
+            // OS
             if let Ok(os) = &self.os {
                 icon = os.distro.icon();
-                info.push_str(&format!("{GREEN}{BOLD}OS: {RESET}{}\n", os));
+                append(&mut info, "OS", &self.os);
             }
 
-            if let Ok(host) = &self.host {
-                info.push_str(&format!("{GREEN}{BOLD}Host: {RESET}{host}\n"));
-            }
-
-            if let Ok(rom) = &self.rom {
-                info.push_str(&format!("{GREEN}{BOLD}Rom: {RESET}{rom}\n"));
-            }
-
-            if let Ok(baseband) = &self.baseband {
-                info.push_str(&format!("{GREEN}{BOLD}Baseband: {RESET}{baseband}\n"));
-            }
-
-            // Handle kernel (Result type)
-            if let Ok(kernel) = &self.kernel {
-                info.push_str(&format!("{GREEN}{BOLD}Kernel: {RESET}{kernel}\n"));
-            }
+            append(&mut info, "Host", &self.host);
+            append(&mut info, "Rom", &self.rom);
+            append(&mut info, "Baseband", &self.baseband);
+            append(&mut info, "Kernel", &self.kernel);
 
             if let Ok(uptime) = &self.uptime
                 && uptime.0 > 0
             {
-                info.push_str(&format!("{GREEN}{BOLD}Uptime: {RESET}{uptime}\n"));
+                append(&mut info, "Uptime", &self.uptime);
             }
 
             if let Ok(packages) = &self.packages {
@@ -299,9 +304,7 @@ mod cli {
                 }
             }
 
-            if let Ok(shell) = &self.shell {
-                info.push_str(&format!("{GREEN}{BOLD}Shell: {RESET}{shell}\n"));
-            }
+            append(&mut info, "Shell", &self.shell);
 
             if let Ok(displays) = &self.display {
                 for display in displays {
@@ -319,9 +322,7 @@ mod cli {
                 }
             }
 
-            if let Some(de) = &self.de {
-                info.push_str(&format!("{GREEN}{BOLD}DE: {RESET}{de}\n"));
-            }
+            append(&mut info, "DE", &self.de);
 
             if let Ok(wm) = &self.wm {
                 if let Ok(theme) = &self.wm_theme {
@@ -333,9 +334,7 @@ mod cli {
                 }
             }
 
-            if let Ok(terminal) = &self.terminal {
-                info.push_str(&format!("{GREEN}{BOLD}Terminal: {RESET}{terminal}\n"));
-            }
+            append(&mut info, "Terminal", &self.terminal);
 
             if let Ok(disks) = &self.disk {
                 for disk in disks {
@@ -348,27 +347,20 @@ mod cli {
                 }
             }
 
-            // Handle CPU (Result type)
-            if let Ok(cpu) = &self.cpu {
-                info.push_str(&format!("{GREEN}{BOLD}CPU: {RESET}{cpu}\n"));
-            }
+            append(&mut info, "CPU", &self.cpu);
 
-            if let Some(gpu) = &self.gpu {
+            if let Ok(gpu) = &self.gpu {
                 for g in gpu {
                     info.push_str(&format!("{GREEN}{BOLD}GPU: {RESET}{g}\n"));
                 }
             }
 
-            // Handle memory (Result type)
-            if let Ok(memory) = &self.memory {
-                info.push_str(&format!("{GREEN}{BOLD}Memory: {RESET}{memory}\n"));
-            }
-            // Handle temperature sensors (Result type)
+            append(&mut info, "Memory", &self.memory);
+
             if let Ok(sensors) = &self.temperature
                 && !sensors.is_empty()
             {
                 let k = "Temperature: ";
-                // Show only the first few sensors to avoid clutter
                 for (i, sensor) in sensors.iter().take(3).enumerate() {
                     if i == 0 {
                         info.push_str(&format!("{GREEN}{BOLD}{k}{RESET}{sensor}\n"));
@@ -380,19 +372,15 @@ mod cli {
                     }
                 }
             }
+
             if let Ok(battery) = &self.battery {
-                info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}\n"));
+                info.push_str(&format!("{GREEN}{BOLD}Battery: {RESET}{battery}%\n"));
             }
 
-            if let Some(ip) = &self.local_ip {
-                info.push_str(&format!("{GREEN}{BOLD}Local IP: {RESET}{ip}\n"));
-            }
-            if let Some(ip) = &self.ip {
-                info.push_str(&format!("{GREEN}{BOLD}IP: {RESET}{ip}\n"));
-            }
-            // Handle network interfaces (Result type)
+            append(&mut info, "Local IP", &self.local_ip);
+            append(&mut info, "IP", &self.ip);
+
             if let Ok(interfaces) = &self.network {
-                // Show only active interfaces with IP addresses
                 let active_interfaces: Vec<_> = interfaces
                     .iter()
                     .filter(|iface| iface.is_up && iface.ipv4_address.is_some())
@@ -401,7 +389,10 @@ mod cli {
                 if !active_interfaces.is_empty() {
                     let k = "Network: ";
                     for (i, iface) in active_interfaces.iter().take(3).enumerate() {
-                        let ip = iface.ipv4_address.as_ref().unwrap();
+                        let ip = iface
+                            .ipv4_address
+                            .as_deref()
+                            .unwrap_or("N/A");
                         if i == 0 {
                             info.push_str(&format!(
                                 "{GREEN}{BOLD}{k}{RESET}{} ({ip})\n",
@@ -418,9 +409,7 @@ mod cli {
                 }
             }
 
-            if let Ok(locale) = &self.locale {
-                info.push_str(&format!("{GREEN}{BOLD}Locale: {RESET}{locale}\n"));
-            }
+            append(&mut info, "Locale", &self.locale);
 
             // Color bars
             let color_str: String = [

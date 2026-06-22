@@ -30,16 +30,12 @@ pub async fn get_baseband() -> crate::error::Result<String> {
 
 #[cfg(target_os = "android")]
 pub async fn get_rom() -> crate::error::Result<String> {
-    crate::share::get_property("ro.build.display.id").ok_or_else(|| {
-        crate::error::NeofetchError::data_unavailable("ROM information not available")
-    })
+    crate::share::get_property("ro.build.display.id")
 }
 
 #[cfg(target_os = "android")]
 pub async fn get_baseband() -> crate::error::Result<String> {
-    crate::share::get_property("ro.baseband").ok_or_else(|| {
-        crate::error::NeofetchError::data_unavailable("Baseband information not available")
-    })
+    crate::share::get_property("ro.baseband")
 }
 
 #[cfg(unix)]

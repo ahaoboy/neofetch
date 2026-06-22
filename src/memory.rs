@@ -36,12 +36,14 @@ pub async fn get_memory() -> Result<String> {
 
     // Calculate used memory
     let used_kb = total_kb - free_kb;
+    let usage_percent = (used_kb / total_kb * 100.0) as u32;
 
     use human_bytes::human_bytes;
     Ok(format!(
-        "{} / {}",
+        "{} / {} ({}%)",
         human_bytes(used_kb * 1024.0),
         human_bytes(total_kb * 1024.0),
+        usage_percent,
     ))
 }
 

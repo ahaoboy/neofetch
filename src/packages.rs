@@ -32,69 +32,80 @@ impl Display for Packages {
 
 use std::fmt::Display;
 
-use crate::share::exec;
+use crate::error::{NeofetchError, Result};
+use crate::utils::process::execute_command_sync;
 
-fn pacman() -> Option<usize> {
+/// Build a platform-aware Unix path (handles MSYS2 on Windows)
+#[allow(unused_variables)]
+fn unix_path(unix: &str, windows_msys: &str) -> std::path::PathBuf {
     #[cfg(unix)]
-    let dir = std::path::Path::new("/var/lib/pacman/local");
-    #[cfg(windows)]
-    let dir = std::path::Path::new(&std::env::var("MSYSTEM_PREFIX").ok()?.to_string())
-        .parent()
-        .unwrap_or(std::path::Path::new("/"))
-        .join("var/lib/pacman/local");
-
-    Some(std::fs::read_dir(dir).ok()?.count().saturating_sub(1))
-}
-fn snap() -> Option<usize> {
-    #[cfg(unix)]
-    let dir = std::path::Path::new("/var/lib/snapd/snaps");
-    #[cfg(windows)]
-    let dir = std::path::Path::new(&std::env::var("MSYSTEM_PREFIX").ok()?.to_string())
-        .parent()
-        .unwrap_or(std::path::Path::new("/"))
-        .join("var/lib/snapd/snaps");
-
-    Some(std::fs::read_dir(dir).ok()?.count().saturating_sub(1))
-}
-
-fn scoop() -> Option<usize> {
-    let home_dir = dirs::home_dir()?;
-    let dir = home_dir.join("scoop").join("apps");
-
-    Some(std::fs::read_dir(dir).ok()?.count().saturating_sub(1))
-}
-
-fn dpkg() -> Option<usize> {
-    #[cfg(unix)]
-    let dir = std::path::Path::new("/var/lib/dpkg/status");
-    #[cfg(windows)]
-    let dir = std::path::Path::new(&std::env::var("MSYSTEM_PREFIX").ok()?.to_string())
-        .parent()
-        .unwrap_or(std::path::Path::new("/"))
-        .join("var/lib/dpkg/status");
-    let file = std::fs::read_to_string(dir).ok()?;
-    let mut package_count = 0;
-    for line in file.lines() {
-        if line.starts_with("Package:") {
-            package_count += 1;
-        }
+    {
+        std::path::Path::new(unix).to_path_buf()
     }
-    Some(package_count)
+    #[cfg(windows)]
+    {
+        let prefix = std::env::var("MSYSTEM_PREFIX").ok();
+        let base = prefix.as_deref().unwrap_or("/");
+        std::path::Path::new(base)
+            .parent()
+            .unwrap_or(std::path::Path::new("/"))
+            .join(windows_msys)
+    }
 }
 
-fn opkg() -> Option<usize> {
-    exec("opkg", ["list-installed"]).map(|i| i.lines().count())
+fn pacman() -> Result<usize> {
+    let dir = unix_path("/var/lib/pacman/local", "var/lib/pacman/local");
+    let count = std::fs::read_dir(&dir)
+        .map_err(|e| NeofetchError::file_read(dir.display().to_string(), e))?
+        .count();
+    Ok(count.saturating_sub(1))
 }
 
-pub async fn get_packages() -> crate::error::Result<Packages> {
-    let packages = tokio::task::spawn_blocking(|| Packages {
-        snap: snap().unwrap_or_default(),
-        dpkg: dpkg().unwrap_or_default(),
-        pacman: pacman().unwrap_or_default(),
-        scoop: scoop().unwrap_or_default(),
-        opkg: opkg().unwrap_or_default(),
+fn snap() -> Result<usize> {
+    let dir = unix_path("/var/lib/snapd/snaps", "var/lib/snapd/snaps");
+    let count = std::fs::read_dir(&dir)
+        .map_err(|e| NeofetchError::file_read(dir.display().to_string(), e))?
+        .count();
+    Ok(count.saturating_sub(1))
+}
+
+fn scoop() -> Result<usize> {
+    let home_dir = dirs::home_dir()
+        .ok_or_else(|| NeofetchError::data_unavailable("Home directory not found"))?;
+    let dir = home_dir.join("scoop").join("apps");
+    let count = std::fs::read_dir(&dir)
+        .map_err(|e| NeofetchError::file_read(dir.display().to_string(), e))?
+        .count();
+    Ok(count.saturating_sub(1))
+}
+
+fn dpkg() -> Result<usize> {
+    let dir = unix_path("/var/lib/dpkg/status", "var/lib/dpkg/status");
+    let file = std::fs::read_to_string(&dir)
+        .map_err(|e| NeofetchError::file_read(dir.display().to_string(), e))?;
+    let package_count = file
+        .lines()
+        .filter(|line| line.starts_with("Package:"))
+        .count();
+    Ok(package_count)
+}
+
+fn opkg() -> Result<usize> {
+    let output = execute_command_sync("opkg", &["list-installed"])?;
+    Ok(output.lines().count())
+}
+
+pub async fn get_packages() -> Result<Packages> {
+    let packages = tokio::task::spawn_blocking(|| -> Result<Packages> {
+        Ok(Packages {
+            snap: snap().unwrap_or_default(),
+            dpkg: dpkg().unwrap_or_default(),
+            pacman: pacman().unwrap_or_default(),
+            scoop: scoop().unwrap_or_default(),
+            opkg: opkg().unwrap_or_default(),
+        })
     })
-    .await?;
+    .await??;
 
     Ok(packages)
 }

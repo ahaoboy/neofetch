@@ -599,7 +599,7 @@ pub async fn get_os() -> Result<OS> {
     match sysname.to_lowercase().as_str() {
         #[cfg(target_os = "android")]
         "android" => {
-            let version = crate::share::get_property("ro.build.version.release");
+            let version = crate::share::get_property("ro.build.version.release").ok();
             let name = if let Some(v) = version {
                 format!("Android {}", v)
             } else {

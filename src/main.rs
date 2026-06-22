@@ -1,5 +1,5 @@
 #[tokio::main]
 async fn main() {
-    let s = neofetch::neofetch().await;
-    println!("{s}")
+    let neofetch = neofetch::Neofetch::new().await;
+    println!("{neofetch}")
 }

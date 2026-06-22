@@ -85,9 +85,7 @@ pub async fn get_wm_theme() -> crate::error::Result<String> {
             ))
         })?;
 
-        let theme_name = get_file_name(&current_theme).ok_or_else(|| {
-            crate::error::NeofetchError::parse_error("theme_path", "Failed to extract theme name")
-        })?;
+        let theme_name = get_file_name(&current_theme)?;
 
         Ok(theme_name)
     })
