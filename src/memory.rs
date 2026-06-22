@@ -56,7 +56,7 @@ pub async fn get_memory() -> Result<String> {
     let total_bytes = macos::get_memory_total().await?;
 
     // Parse vm_stat for memory usage
-    let vm_stat = execute_command("vm_stat", &[]).await?;
+    let vm_stat = execute_command("vm_stat", &[] as &[&str]).await?;
     let page_size_bytes: u64 = 16384; // Default macOS page size
 
     let parse_vm_stat = |key: &str| -> Option<u64> {
@@ -89,7 +89,10 @@ pub async fn get_memory() -> Result<String> {
 }
 
 /// Get memory information on other Unix systems
-#[cfg(all(unix, not(any(target_os = "linux", target_os = "android", target_os = "macos"))))]
+#[cfg(all(
+    unix,
+    not(any(target_os = "linux", target_os = "android", target_os = "macos"))
+))]
 pub async fn get_memory() -> Result<String> {
     Err(NeofetchError::UnsupportedPlatform)
 }

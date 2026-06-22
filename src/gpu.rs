@@ -12,17 +12,19 @@ pub struct Gpu {
 }
 impl Display for Gpu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut v = vec![self.name.clone()];
+        let mut parts: Vec<String> = vec![self.name.clone()];
         if self.ram > 0 {
-            v.push(format!("({})", human_bytes(self.ram as f64)));
+            parts.push(format!("({})", human_bytes(self.ram as f64)));
         }
-
         if !self.version.is_empty() {
-            let sep = if self.ram > 0 { "@" } else { "" };
-            v.push(format!("{sep} ({})", self.version));
+            if self.ram > 0 {
+                parts.push(format!("@ ({})", self.version));
+            } else {
+                parts.push(format!("({})", self.version));
+            }
         }
 
-        f.write_str(&v.join(" "))
+        f.write_str(&parts.join(" "))
     }
 }
 
