@@ -124,11 +124,11 @@ pub async fn get_cpu() -> Result<Cpu> {
 pub async fn get_cpu() -> Result<Cpu> {
     use crate::utils::read_file_to_string;
 
-    // Get SoC model from Android properties
-    let soc_model = crate::share::get_property("ro.soc.model")?;
+    // Get SoC model with fallbacks (ro.soc.model → ro.hardware → ro.board.platform)
+    let soc_model = crate::platform::android::get_soc_model()?;
 
     // Try to map to a known CPU name, fall back to raw model
-    let name = crate::share::detect_cpu(&soc_model).unwrap_or_else(|_| soc_model);
+    let name = crate::share::detect_cpu(&soc_model).unwrap_or(soc_model);
 
     let mut cpu = Cpu {
         name,

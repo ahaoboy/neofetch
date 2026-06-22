@@ -31,8 +31,22 @@ pub async fn get_locale() -> crate::error::Result<String> {
         .or_else(|_| std::env::var("LANG"))
         .unwrap_or_default();
 
-    // "C" / "C.UTF-8" is the fallback locale — try system config for a real one
+    // "C" / "C.UTF-8" is the fallback locale — try harder to find the real one
     if locale.starts_with('C') || locale.is_empty() {
+        // Try $LANGUAGE (GNU extension: "en_US:en"), often set even when LANG=C
+        if let Ok(lang) = std::env::var("LANGUAGE") {
+            if let Some(first) = lang.split(':').next() {
+                if !first.is_empty() && !first.starts_with('C') {
+                    let real = if first.contains('.') {
+                        first.to_string()
+                    } else {
+                        format!("{}.UTF-8", first)
+                    };
+                    return Ok(real);
+                }
+            }
+        }
+
         // Try /etc/default/locale (Ubuntu/Debian) or /etc/locale.conf (Arch)
         for path in ["/etc/default/locale", "/etc/locale.conf"] {
             if let Ok(content) = tokio::fs::read_to_string(path).await {
