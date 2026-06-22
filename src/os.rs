@@ -648,11 +648,27 @@ pub async fn get_os() -> Result<OS> {
                 name: "Linux".to_string(),
             })
         }
-        "darwin" | "macos" | "ios" => Ok(OS {
-            distro: Distro::Darwin,
-            arch,
-            name: "Darwin".to_string(),
-        }),
+        "darwin" | "macos" | "ios" => {
+            // Use sw_vers to get macOS version
+            let name = crate::utils::execute_command("sw_vers", &["-productName"])
+                .await
+                .unwrap_or_else(|_| "macOS".to_string());
+            let version = crate::utils::execute_command("sw_vers", &["-productVersion"])
+                .await
+                .unwrap_or_default();
+
+            let full_name = if version.is_empty() {
+                name
+            } else {
+                format!("{} {}", name, version)
+            };
+
+            Ok(OS {
+                distro: Distro::Mac,
+                arch,
+                name: full_name,
+            })
+        }
         _ => Err(NeofetchError::UnsupportedPlatform),
     }
 }

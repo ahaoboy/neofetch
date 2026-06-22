@@ -12,14 +12,14 @@ pub struct Gpu {
 }
 impl Display for Gpu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut v = vec![];
-        v.push(self.name.clone());
+        let mut v = vec![self.name.clone()];
         if self.ram > 0 {
             v.push(format!("({})", human_bytes(self.ram as f64)));
         }
 
         if !self.version.is_empty() {
-            v.push(format!("@ ({})", self.version));
+            let sep = if self.ram > 0 { "@" } else { "" };
+            v.push(format!("{sep} ({})", self.version));
         }
 
         f.write_str(&v.join(" "))
@@ -163,9 +163,16 @@ pub async fn get_gpu() -> Result<Vec<Gpu>> {
             .into_iter()
             .any(|i| device_name.as_str().contains(i))
         {
+            // Combine vendor + device into name; version is driver version (unavailable via PCI)
+            let name = if vendor_name.eq_ignore_ascii_case(device_name) {
+                vendor_name.to_owned()
+            } else {
+                format!("{} {}", vendor_name, device_name)
+            };
+
             v.push(Gpu {
-                name: vendor_name.to_owned(),
-                version: device_name.to_owned(),
+                name,
+                version: String::new(),
                 ram: 0,
             });
         }

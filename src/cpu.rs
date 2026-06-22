@@ -65,8 +65,8 @@ pub async fn get_cpu() -> Result<Cpu> {
         .ok_or_else(|| NeofetchError::data_unavailable("No CPU information found"))
 }
 
-/// Get CPU information on Linux and macOS
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+/// Get CPU information on Linux
+#[cfg(target_os = "linux")]
 pub async fn get_cpu() -> Result<Cpu> {
     use crate::utils::{parse_proc_file, read_file_to_string};
 
@@ -103,6 +103,22 @@ pub async fn get_cpu() -> Result<Cpu> {
     Ok(cpu)
 }
 
+/// Get CPU information on macOS
+#[cfg(target_os = "macos")]
+pub async fn get_cpu() -> Result<Cpu> {
+    use crate::platform::macos;
+
+    let name = macos::get_cpu_brand().await?;
+    let cores = macos::get_cpu_core_count().await?;
+    let speed_mhz = macos::get_cpu_frequency().await? as u32;
+
+    Ok(Cpu {
+        name: name.trim().to_string(),
+        cores,
+        speed: speed_mhz,
+    })
+}
+
 /// Get CPU information on Android
 #[cfg(target_os = "android")]
 pub async fn get_cpu() -> Result<Cpu> {
@@ -111,7 +127,8 @@ pub async fn get_cpu() -> Result<Cpu> {
     // Get SoC model from Android properties
     let soc_model = crate::share::get_property("ro.soc.model")?;
 
-    let name = crate::share::detect_cpu(&soc_model)?;
+    // Try to map to a known CPU name, fall back to raw model
+    let name = crate::share::detect_cpu(&soc_model).unwrap_or_else(|_| soc_model);
 
     let mut cpu = Cpu {
         name,

@@ -4,8 +4,8 @@
 
 use crate::error::{NeofetchError, Result};
 
-/// Get memory information on Unix-like systems
-#[cfg(not(windows))]
+/// Get memory information on Linux / Android
+#[cfg(any(target_os = "linux", target_os = "android"))]
 pub async fn get_memory() -> Result<String> {
     use crate::utils::{parse_proc_file, read_file_to_string};
 
@@ -45,6 +45,53 @@ pub async fn get_memory() -> Result<String> {
         human_bytes(total_kb * 1024.0),
         usage_percent,
     ))
+}
+
+/// Get memory information on macOS
+#[cfg(target_os = "macos")]
+pub async fn get_memory() -> Result<String> {
+    use crate::platform::macos;
+    use crate::utils::execute_command;
+
+    let total_bytes = macos::get_memory_total().await?;
+
+    // Parse vm_stat for memory usage
+    let vm_stat = execute_command("vm_stat", &[]).await?;
+    let page_size_bytes: u64 = 16384; // Default macOS page size
+
+    let parse_vm_stat = |key: &str| -> Option<u64> {
+        vm_stat
+            .lines()
+            .find(|l| l.trim_start().starts_with(key))
+            .and_then(|l| l.rsplit(':').next())
+            .and_then(|v| v.trim().trim_end_matches('.').parse::<u64>().ok())
+    };
+
+    let free_pages = parse_vm_stat("Pages free").unwrap_or(0);
+    let active_pages = parse_vm_stat("Pages active").unwrap_or(0);
+    let inactive_pages = parse_vm_stat("Pages inactive").unwrap_or(0);
+    let wired_pages = parse_vm_stat("Pages wired down").unwrap_or(0);
+    let speculative_pages = parse_vm_stat("Pages speculative").unwrap_or(0);
+
+    let used_pages = active_pages + wired_pages + speculative_pages;
+    let free_total_pages = free_pages + inactive_pages;
+    let used_bytes = used_pages * page_size_bytes;
+
+    let usage_percent = (used_bytes as f64 / total_bytes as f64 * 100.0) as u32;
+
+    use human_bytes::human_bytes;
+    Ok(format!(
+        "{} / {} ({}%)",
+        human_bytes(used_bytes as f64),
+        human_bytes(total_bytes as f64),
+        usage_percent,
+    ))
+}
+
+/// Get memory information on other Unix systems
+#[cfg(all(unix, not(any(target_os = "linux", target_os = "android", target_os = "macos"))))]
+pub async fn get_memory() -> Result<String> {
+    Err(NeofetchError::UnsupportedPlatform)
 }
 
 /// Get memory information on Windows

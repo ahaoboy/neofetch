@@ -26,10 +26,35 @@ pub async fn get_locale() -> crate::error::Result<String> {
 
 #[cfg(any(target_os = "macos", target_os = "linux",))]
 pub async fn get_locale() -> crate::error::Result<String> {
-    std::env::var("LC_ALL")
+    let locale = std::env::var("LC_ALL")
         .or_else(|_| std::env::var("LC_CTYPE"))
         .or_else(|_| std::env::var("LANG"))
-        .map_err(|_| {
-            crate::error::NeofetchError::data_unavailable("Locale environment variables not set")
-        })
+        .unwrap_or_default();
+
+    // "C" / "C.UTF-8" is the fallback locale — try system config for a real one
+    if locale.starts_with('C') || locale.is_empty() {
+        // Try /etc/default/locale (Ubuntu/Debian) or /etc/locale.conf (Arch)
+        for path in ["/etc/default/locale", "/etc/locale.conf"] {
+            if let Ok(content) = tokio::fs::read_to_string(path).await {
+                for line in content.lines() {
+                    if let Some(val) = line
+                        .strip_prefix("LANG=")
+                        .or_else(|| line.strip_prefix("LC_ALL="))
+                    {
+                        let val = val.trim_matches('"').trim();
+                        if !val.is_empty() && !val.starts_with('C') {
+                            return Ok(val.to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if locale.is_empty() {
+        return Err(crate::error::NeofetchError::data_unavailable(
+            "Locale environment variables not set",
+        ));
+    }
+    Ok(locale)
 }

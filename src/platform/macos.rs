@@ -64,9 +64,19 @@ pub async fn get_macos_version() -> Result<String> {
     execute_command("sw_vers", &["-productVersion"]).await
 }
 
+/// Get macOS product name
+pub async fn get_macos_product_name() -> Result<String> {
+    execute_command("sw_vers", &["-productName"]).await
+}
+
 /// Get macOS build version
 pub async fn get_macos_build() -> Result<String> {
     execute_command("sw_vers", &["-buildVersion"]).await
+}
+
+/// Get Mac model identifier (e.g., "MacBookPro18,1")
+pub async fn get_host_model() -> Result<String> {
+    sysctl("hw.model").await
 }
 
 /// Execute system_profiler command
