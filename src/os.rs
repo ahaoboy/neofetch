@@ -620,16 +620,18 @@ pub async fn get_os() -> Result<OS> {
                         let name = pretty_name.trim_matches('"').to_string();
 
                         // Detect specific distributions
-                        let distro = if name.contains("Ubuntu") {
+                        let distro = if name.contains("Alpine") {
+                            Distro::Alpine
+                        } else if name.contains("Ubuntu") {
                             Distro::Ubuntu
                         } else if name.contains("Debian") {
                             Distro::Debian
                         } else if name.contains("Fedora") {
                             Distro::Fedora
-                        } else if name.contains("Arch") {
-                            Distro::Arch
                         } else if name.contains("Manjaro") {
                             Distro::Manjaro
+                        } else if name.contains("Arch") {
+                            Distro::Arch
                         } else if name.contains("OpenWrt") {
                             Distro::OpenWrt
                         } else {

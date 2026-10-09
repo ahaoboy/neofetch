@@ -65,7 +65,7 @@ ansi-width = "0.1"
 which-shell = { version = "0.1", git = "https://github.com/ahaoboy/which-shell", optional = true }
 which-terminal = { version = "0.1", git = "https://github.com/ahaoboy/which-terminal", optional = true }
 tokio = { version = "1", features = ["full"] }
-dirs = { version = "6", optional = true }
+dirs = { version = "7", optional = true }
 thiserror = "2"
 chrono = { version = "0.4", optional = true }
 public-ip-address = { version = "0.4", default-features = false, features = [
